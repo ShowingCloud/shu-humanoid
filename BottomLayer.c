@@ -1,33 +1,28 @@
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <sys/ioctl.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 #include <time.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <linux/types.h>
 #include <linux/videodev.h>
 
 #include "BottomLayer.h"
+#include "SocketServer.h"
 
 struct video_mmap map;
 struct video_mbuf mbuf;
-int nextframe = 1;
-
-int get_brightness_adj (unsigned char *image, long size, int *brightness)
-{
-	long i, tot = 0;
-
-	for (i = 0; i < size * 3; i++)
-		tot += image[i];
-	*brightness = (128 - tot / (size * 3)) / 3;
-
-	return !((tot / (size * 3)) >= 126 && (tot / (size * 3)) <= 130);
-}
+int nextframe = 0;
 
 int InitVideo ()
 {
@@ -75,11 +70,6 @@ int InitVideo ()
 		return -1;
 	}
 
-//	frame = malloc(CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
-//	if (!frame) {
-//		fprintf(stderr, "Out of memory.\n");
-//		exit(1);
-//	}
 	map.frame = 2;
 	map.width = CAPTURE_WIDTH;
 	map.height = CAPTURE_HEIGHT;
@@ -103,26 +93,14 @@ int InitVideo ()
 		return -1;
 	}
 
+	while (ioctl (file, VIDIOCSYNC, &nextframe) < 0)
+		usleep (1000);
+
 	return file;
 }
 
 int RetrieveFrame (int video)
 {
-//	int f, newbright;
-
-//	do {
-//		read (video, frame, CAPTURE_WIDTH * CAPTURE_HEIGHT * CAPTURE_BPP);
-//		f = get_brightness_adj (frame, CAPTURE_WIDTH * CAPTURE_HEIGHT, &newbright);
-//		if (f) {
-//			pic.brightness += (newbright << 8);
-//			if (ioctl (file, VIDIOCSPICT, &video->pic) == -1)
-//			{
-//				perror("VIDIOSPICT");
-//				break;
-//			}
-//		}
-//	} while (f);
-	
 	nextframe ^= 1;
 
 	if (ioctl (video, VIDIOCSYNC, &nextframe) < 0)
@@ -231,4 +209,36 @@ struct motor_step ReadMotionFile (FILE *file)
 	}
 
 	return ret;
+}
+
+int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20])
+{
+	int sockfd, result;
+	socklen_t len;
+	struct sockaddr_in address;
+
+	sockfd = socket (AF_INET, SOCK_STREAM, 0);
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = inet_addr (addr);
+	address.sin_port = htons (10200);
+	len = sizeof (address);
+
+	if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1)
+	{
+		perror (sock_name);
+		exit (-1);
+	}
+
+	write (sockfd, &sock_id, sizeof (int));
+	read (sockfd, server_id, sizeof (int));
+	if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID)
+	{
+		printf ("Error: unknown socket server!\n");
+		exit (-1);
+	}
+	else
+	{
+		printf ("Connected with the socket server! (%s)\n", sock_name);
+		return sockfd;
+	}
 }

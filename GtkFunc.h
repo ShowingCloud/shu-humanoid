@@ -3,7 +3,6 @@
  * May be copied or modified under the terms of the GNU General Public License.
  *
  * Some inclusions, definitions, structures, varibles, and declarations for functions.
- * Only for My_Pickup.c right now.
  */
 
 #ifndef _Gtk_Func_H_
@@ -13,7 +12,8 @@
 #include "BottomLayer.h"
 #include <gtk/gtk.h>
 
-GtkWidget *dialog, *SearchResult, *GaitInfo, *image, *ScrollLabel[MOTOR_NUM];
+GtkWidget *dialog, *SearchResult, *GaitInfo, *image_info, *image_vision, *ScrollLabel[MOTOR_NUM];
+GtkWidget *point_info, *SearchButton;
 GtkAdjustment *Adjustment[MOTOR_NUM];
 
 gboolean deleted (GtkWidget *, GdkEvent *, gpointer);
@@ -22,5 +22,7 @@ gboolean socket_frame_event (GIOChannel *, GIOCondition, gpointer);
 gboolean StartStopSearching (GtkWidget *, gpointer);
 gboolean Adjusted (GtkAdjustment *, gpointer);
 gboolean PageChanged (GtkNotebook *, GtkNotebookPage *, guint, gpointer);
+gboolean motion_notify (GtkWidget *, GdkEventButton *, gpointer);
+gboolean button_press (GtkWidget *, GdkEventButton *, gpointer);
 
 #endif

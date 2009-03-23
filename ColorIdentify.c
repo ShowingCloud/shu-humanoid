@@ -65,7 +65,7 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 	return ret;
 }
 
-struct HSVColor RGB2HSV(int R, int G, int B)
+struct HSVColor RGB2HSV (int R, int G, int B)
 {
 	/*
 	 * Convert RGB color to HSV.
@@ -76,11 +76,11 @@ struct HSVColor RGB2HSV(int R, int G, int B)
 
 	if (R > G)
 	{
-		if (B > R) /* max = B; min = R; B != 0; B != R; */
+		if (B > R) /* max = B; min = G; B != 0; B != R; */
 		{
 			V = B;
-			S = (B - R) * 255 / B;
-			H = 240 + (R - G) * 60 / (B - R);
+			S = (B - G) * 255 / B;
+			H = 240 + (R - G) * 60 / (B - G);
 			struct HSVColor ret = {H, S, V};
 			return ret;
 		}
@@ -136,76 +136,4 @@ struct HSVColor RGB2HSV(int R, int G, int B)
 			return ret;
 		}
 	}
-
-	/*
-	 * Another algorithm using float variables.
-	 * Rf = R / 255; Gf = G / 255; Bf = B / 255;
-	 * This is lossless, but may not be as efficient as the former one.
-	 * TODO: thoroughly examination
-	 */
-#if 0
-	Vf = (Rf > Gf) ? ((Bf > Rf) ? Bf : Rf) : ((Gf > Bf) ? Gf : Bf);
-	Sf = (Vf - ((Rf < Gf) ? ((Bf < Rf) ? Bf : Rf) : ((Gf < Bf) ? Gf : Bf))) / Vf;
-	if (Vf == Rf) H = (Gf - Bf) * 60 / Sf;
-	if (Vf == Gf) H = 180 + (Bf - Rf) * 60 / Sf;
-	if (Vf == Bf) H = 240 + (Rf - Gf) * 60 / Sf;
-	if (H < 0) H += 360;
-	V = Vf * 255;
-	S = Sf * 255;
-	H /= 2;
-#endif
-
-	/*
-	 * The algorithm used in opencv, converting a matrix from RGB to HSV.
-	 * TODO: thoroughly examination
-	 */
-#if 0
-static CvStatus CV_STDCALL
-icvBGRx2HSV_32f_CnC3R( const float* src, int srcstep,
-                       float* dst, int dststep,
-                       CvSize size, int src_cn, int blue_idx )
-{
-    int i;
-    srcstep /= sizeof(src[0]);
-    dststep /= sizeof(dst[0]);
-    srcstep -= size.width*src_cn;
-    size.width *= 3;
-
-    for( ; size.height--; src += srcstep, dst += dststep )
-    {
-        for( i = 0; i < size.width; i += 3, src += src_cn )
-        {
-            float b = src[blue_idx], g = src[1], r = src[2^blue_idx];
-            float h, s, v;
-
-            float vmin, diff;
-
-            v = vmin = r;
-            if( v < g ) v = g;
-            if( v < b ) v = b;
-            if( vmin > g ) vmin = g;
-            if( vmin > b ) vmin = b;
-
-            diff = v - vmin;
-            s = diff/(float)(fabs(v) + FLT_EPSILON);
-            diff = (float)(60./(diff + FLT_EPSILON));
-            if( v == r )
-                h = (g - b)*diff;
-            else if( v == g )
-                h = (b - r)*diff + 120.f;
-            else
-                h = (r - g)*diff + 240.f;
-
-            if( h < 0 ) h += 360.f;
-
-            dst[i] = h;
-            dst[i+1] = s;
-            dst[i+2] = v;
-        }
-    }
-
-    return CV_OK;
-}
-#endif
-
 }
