@@ -14,7 +14,7 @@
 
 struct video_mmap map;
 struct video_mbuf mbuf;
-int nextframe = 0;
+int nextframe = 1;
 
 int get_brightness_adj (unsigned char *image, long size, int *brightness)
 {
@@ -121,15 +121,7 @@ int RetrieveFrame (int video)
 //		}
 //	} while (f);
 	
-	if (nextframe == 2)
-	{
-		nextframe = 0;
-		if (ioctl (video, VIDIOCMCAPTURE, &map) < 0)
-		{
-			perror ("VIDIOCMCAPTURE");
-			return -1;
-		}
-	}
+	nextframe ^= 1;
 
 	if (ioctl (video, VIDIOCSYNC, &nextframe) < 0)
 	{
@@ -137,7 +129,16 @@ int RetrieveFrame (int video)
 		return -1;
 	}
 
-	return mbuf.offsets[nextframe++];
+	if (nextframe)
+	{
+		if (ioctl (video, VIDIOCMCAPTURE, &map) < 0)
+		{
+			perror ("VIDIOCMCAPTURE");
+			return -1;
+		}
+	}
+
+	return mbuf.offsets[nextframe];
 }
 
 int Closevideo (int video)
@@ -183,4 +184,51 @@ int CloseShared (void *map)
 	munmap (map, mbuf.size);
 
 	return 1;
+}
+
+int InitMotors ()
+{
+	int file;
+
+	if ((file = open ("/dev/motors", O_RDWR)) < 0)
+	{
+		perror ("/dev/motors");
+		return -1;
+	}
+	
+	return file;
+}
+
+int SendMotors (int file, struct motor_step step)
+{
+	struct motor_response ret;
+
+//	if (ioctl (file, RM_EXEC_STEP, &step) < 0)
+	if (ioctl (file, 1, &step) < 0)
+	{
+		perror ("RM_EXEC_STEP");
+		return -1;
+	}
+
+//	usleep (10000);
+	do
+		read (file, &ret, sizeof (struct motor_response));
+	while (ret.retcode != 0);
+
+	return 1;
+}
+
+struct motor_step ReadMotionFile (FILE *file)
+{
+	int motion[24];
+	struct motor_step ret;
+	int i;
+
+	for (i = 0; i < 24; i++)
+	{
+		fscanf (file, "%d,", &motion[i]);
+		ret.onestep[i] = (unsigned char) motion[i];
+	}
+
+	return ret;
 }

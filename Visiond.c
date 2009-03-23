@@ -91,7 +91,8 @@ int main(int argc, char **argv)
 	for(;;)
 	{
 		while ((offset = RetrieveFrame (video)) == -1);
-		SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
+		if (server_id & DO_SEARCHING)
+			SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
 		if (server_id & NEED_FRAME)
 			memcpy (frame_map, frame + offset, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
 

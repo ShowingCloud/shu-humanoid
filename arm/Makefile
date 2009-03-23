@@ -1,14 +1,14 @@
-CC		= gcc
-CFLAGS		= -I. -O0 -g -Wall -Wextra $(shell pkg-config --cflags gtk+-2.0) -DHAS_GTK
-LDFLAGS		= $(shell pkg-config --libs gtk+-2.0)
+CC		= arm-linux-gnu-gcc
+CFLAGS		= -I. -O2 -Wall -Wextra
+LDFLAGS		= 
 
 obj_Visiond	= Visiond.o FrameQueue.o ColorFileOper.o Paint.o Scatter_Spread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o
-obj_Gtk		= GtkGuarder.o GtkFunc.o
+#obj_Gtk		= GtkGuarder.o GtkFunc.o
 obj_Socket	= SocketServer.o BottomLayer.o
 obj_Motors	= Motors.o BottomLayer.o
 
-all: Visiond ConsoleGuarder GtkGuarder SocketServer Motors
+all: Visiond ConsoleGuarder SocketServer Motors
 
 %.o: %.c MyVision.h Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
