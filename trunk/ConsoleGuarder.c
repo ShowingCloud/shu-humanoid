@@ -12,7 +12,7 @@
 
 #include "ConsoleGuarder.h"
 #include "BottomLayer.h"
-#include "SocketServer.h"
+#include "Decision.h"
 #include "Visiond.h"
 
 int main(int argc, char** argv)
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	struct VideoInfo video_info;
 	char info[500], append[300];
 
-	sockfd = InitSocket (CONSOLE_GUARDER_ID, "Console Guarder", &server_id, REMOTE_ADDR, SOCKET_TCP, 0);
+	sockfd = InitSocket (CONSOLE_GUARDER_ID, REMOTE_ADDR, 0);
 
 	for (;;)
 	{

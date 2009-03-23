@@ -6,14 +6,14 @@
 
 #include "Motord.h"
 #include "BottomLayer.h"
-#include "SocketServer.h"
+#include "Decision.h"
 
 int main (int argc, char **argv)
 {
 	int ret, motors, i;
 	struct motor_step step_now;
 
-	int sockfd, server_id, sock_id = MOTORD_ID;
+	int sockfd, sock_id = MOTORD_ID;
 
 #ifdef HAS_MOTORS
 	if ((motors = InitMotors ()) < 0)
@@ -23,7 +23,7 @@ int main (int argc, char **argv)
 	}
 #endif
 
-	sockfd = InitSocket (sock_id, "Motord", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
+	sockfd = InitSocket (sock_id, LOCAL_ADDR, 0);
 
 	step_now = step_init;
 #ifdef HAS_MOTORS
@@ -32,8 +32,10 @@ int main (int argc, char **argv)
 
 	while (1)
 	{
-		write (sockfd, &sock_id, sizeof (int));
-		read (sockfd, &step_now, sizeof (struct motor_step));
+		if (read (sockfd, &step_now, sizeof (struct motor_step)) < 0) {
+			perror ("read");
+			exit (-1);
+		}
 
 #ifdef HAS_MOTORS
 		ret = SendMotors (motors, step_now);
