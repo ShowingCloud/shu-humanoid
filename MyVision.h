@@ -13,7 +13,7 @@
 #include <cxcore.h>
 
 #define COLOR_FILE "colordatafile.txt" /* file to save picked HSV values */
-#define COLOR_TYPES 3
+#define COLOR_TYPES 4
 #define MAX_POINTS_PER_COLOR 20
 #define SCATTER_INTERVAL_X 10
 #define SCATTER_INTERVAL_Y 10
@@ -27,17 +27,18 @@
 #define COLOR_RED 0
 #define COLOR_GREEN 1
 #define COLOR_BLUE 2
-#define COLOR_WHITE 3
-#define COLOR_BLACK 4
+#define COLOR_YELLOW 3
+#define COLOR_WHITE 4
+#define COLOR_BLACK 5
 
 #define CAPTURE_WIDTH 640
 #define CAPTURE_HEIGHT 480
 #define FRAME_PER_SECOND 10
 
 /* names of the colors */
-static const char color_name[][10] = {"red", "green", "blue", "white", "black"};
+static const char color_name[][10] = {"red", "green", "blue", "yellow", "white", "black"};
 /* standard color value, in RGB */
-static const int color_value_rgb[][3] = {{0, 0, 255}, {0, 255, 0}, {255, 0, 0}, {255, 255, 255}, {0, 0, 0}};
+static const int color_value_rgb[][3] = {{0, 0, 255}, {0, 255, 0}, {255, 0, 0}, {0, 255, 255}, {255, 255, 255}, {0, 0, 0}};
 
 int Index_Coordinate[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Number[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Length;
 

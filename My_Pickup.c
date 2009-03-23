@@ -154,6 +154,11 @@ int main(int argc, char** argv)
 					points.point[points.num - i - 1].color = COLOR_BLUE;
 				colors.num = 0;
 				break;
+			case 'y':
+				colors.name = COLOR_YELLOW;
+				while (!RecordColor (fp, colors));
+				for (i = 0; i < colors.num; i++)
+					points.point[points.num - i - 1].color = COLOR_YELLOW;
 			case 'c': /* delete all points of the former color */
 				points.num -= colors.num;
 				colors.num = 0;
