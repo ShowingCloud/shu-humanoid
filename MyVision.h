@@ -8,23 +8,28 @@
 
 #ifndef _My_Vision_H_
 #define _My_Vision_H_
-#include <cv.h>
-#include <highgui.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
-#define filename "colordatafile.txt" /* file to save picked HSV values */
+#include <gtk/gtk.h>
+#include <cxcore.h>
 
-#define COLOR_BLACK 0
-#define COLOR_RED 1
-#define COLOR_GREEN 2
-#define COLOR_BLUE 3
+#define COLOR_FILE "colordatafile.txt" /* file to save picked HSV values */
+#define COLOR_TYPES 3
+#define MAX_POINTS_PER_COLOR 20
+#define SCATTER_INTERVAL_X 1
+#define SCATTER_INTERVAL_Y 1
 
-const char color_name[][10] = {"black", "red", "green", "blue"}; /* names of the colors */
-const int color_value_rgb[][3] = {{0, 0, 0}, {0, 0, 255}, {0, 255, 0}, {255, 0, 0}}; /* standard color value, in RGB */
+#define COLOR_RED 0
+#define COLOR_GREEN 1
+#define COLOR_BLUE 2
+#define COLOR_WHITE 3
+#define COLOR_BLACK 4
+
+#define CAPTURE_WIDTH 640
+#define CAPTURE_HEIGHT 480
+#define FRAME_PER_SECOND 10
+
+extern const char color_name[COLOR_TYPES + 2][10];
+extern const int color_value_rgb[COLOR_TYPES + 2][3];
 
 struct HSVColor
 {
@@ -35,7 +40,7 @@ struct HSVColor
 
 struct HSVColors
 {
-	struct HSVColor HSVColor[10];
+	struct HSVColor HSVColor[MAX_POINTS_PER_COLOR];
 	int num;
 	int name; /* just a pointer to the defined color */
 }; /* a set of HSVColor-s of a single color */
@@ -53,8 +58,46 @@ struct Points
 	int num;
 }; /* a set of point-s */
 
+struct ColorIdentifier
+{
+	int aver_H;
+	int upper_limit_H;
+	int lower_limit_H;
+};
+
+struct PointMatched
+{
+	int capable;
+	int color;
+};
+
+struct FrameQueue
+{
+	int item[CAPTURE_WIDTH * CAPTURE_HEIGHT];
+	int head;
+	int tail;
+};
+
+/* in My_Pickup.c */
 int RecordColor();
 void on_mouse(int, int, int, int, void*);
+static gboolean deleted(GtkWidget*, GdkEvent*, gpointer);
+
+/* in My_Vision.c */
+int ReadColor();
+int SearchForColor(IplImage *);
+struct PointMatched PointMatch(struct HSVColor);
+int PrintColor(IplImage *, int, int);
+
+/* in HSV.c */
 struct HSVColor RGB2HSV(int, int, int);
+
+/* in FrameQueu */
+struct FrameQueue;
+struct FrameQueue *InitQueue();
+int Enqueue(struct FrameQueue *, int);
+int Dequeue(struct FrameQueue *);
+int ClearQueue(struct FrameQueue *);
+int QueueLength(struct FrameQueue *);
 
 #endif
