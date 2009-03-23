@@ -65,6 +65,7 @@ static const int COLOR_VALUE_RGB[][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, 
 #define GTK_GUARDER_FRAME_ID 0x0004
 
 #define NEED_FRAME 0x0010
+#define DO_SEARCHING 0x0020
 
 #define DATAGRAM_ID_MASK 0x3F00
 
@@ -72,6 +73,9 @@ static const int COLOR_VALUE_RGB[][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, 
 
 static const char SOCKET_ID[][20] = {"Socket Listener", "Visiond", "Console Guarder", "Gtk Guarder", "Gtk Guarder (Frame)"};
 static const int MAX_CLIENTS[] = {1, 1, 10, 10, 10};
+
+
+#define MOTOR_NUM 24
 
 
 int Index_Coordinate[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Number[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Length;
@@ -149,18 +153,35 @@ struct VideoInfo
 	int aver_y[COLOR_TYPES];
 };
 
-/* in My_Pickup.c */
-void on_mouse(int, int, int, int, void*);
+struct motor_step
+{
+	unsigned char onestep[MOTOR_NUM];
+};
 
-/* in My_Vision.c */
+struct motor_motion
+{
+	short step_index;
+	short motion_steps;
+	struct motor_step *data;
+};
+
+struct motor_response
+{
+	unsigned short runmode;
+	unsigned short retcode;
+};
+
+/* in Visiond.c */
 int SearchForColor(unsigned char *, struct FrameQueue *, struct FrameQueue *);
-struct PointMatched PointMatch(unsigned char *, int, int);
+
+/* in Scatter_Spread.c */
 int Scattering(struct FrameQueue *);
 int SpreadPoints(unsigned char *, struct FrameQueue *, struct FrameQueue *);
 int Spreading(unsigned char *, struct FrameQueue *, int);
 
-/* in HSV.c */
+/* in ColorIdentify.c */
 struct HSVColor RGB2HSV(int, int, int);
+struct PointMatched PointMatch(unsigned char *, int, int);
 
 /* in FrameQueue.c */
 struct FrameQueue;
@@ -179,6 +200,7 @@ int ReadColor();
 gboolean deleted (GtkWidget *, GdkEvent *, gpointer);
 gboolean socket_event (GIOChannel *, GIOCondition, gpointer);
 gboolean socket_frame_event (GIOChannel *, GIOCondition, gpointer);
+gboolean StartStopSearching (GtkWidget *, gpointer);
 #endif
 
 /* in Paint.c */
@@ -193,6 +215,9 @@ int CloseVideo (int);
 void *InitShared (char *);
 void *OpenShared (char *);
 int CloseShared (void *);
+int InitMotors ();
+int SendMotors (int, struct motor_step);
+struct motor_step ReadMotionFile (FILE *);
 
 /* in SocketServer.c */
 int SelectClient (int);

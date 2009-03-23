@@ -18,7 +18,7 @@
 int has_video_info = 0, shared_inited = 0, frame_id = 64, frame_ready = 0;
 struct VideoInfo video_info;
 int client_index[SOCKET_IDS][10], client_nums[SOCKET_IDS];
-int listener_status = SOCKET_LISTENER_ID;
+int listener_status = SOCKET_LISTENER_ID | DO_SEARCHING;
 unsigned char *frame_map, *frame_pointer;
 
 int main(int argc, char **argv)
@@ -277,6 +277,11 @@ int ServeGtkGuarder (int fd)
 
 	read (fd, &client_id, sizeof (int));
 
+	if (client_id & DO_SEARCHING)
+		listener_status |= DO_SEARCHING;
+	else
+		listener_status &= ~DO_SEARCHING;
+
 	return 1;
 }
 
@@ -303,9 +308,9 @@ int ServeGtkGuarderFrame (int fd)
 
 	if (frame_ready && frame_id != 64) /* FIXME parallel receiving problem */
 	{
-		frame_id++;
 		write (fd, frame_pointer, LARGEST_DATAGRAM);
 		frame_pointer += LARGEST_DATAGRAM;
+		frame_id++;
 	}
 
 	return 1;

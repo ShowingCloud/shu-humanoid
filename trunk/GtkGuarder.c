@@ -26,11 +26,11 @@
 
 #include "MyVision.h"
 
-GtkWidget *dialog, *text, *image;
+GtkWidget *dialog, *SearchResult, *GaitInfo, *image;
 
 int main(int argc, char** argv)
 {
-	GtkWidget *box;
+	GtkWidget *hbox, *vbox1, *vbox2, *ImageFrame, *SearchResultFrame, *GaitInfoFrame, *notebook, *testinfo, *SearchButton;
 	GdkPixbuf *pixbuf;
 
 	int sock_fd, sock_frame_fd, result, i, sock_id = GTK_GUARDER_ID, sock_frame_id = GTK_GUARDER_FRAME_ID, server_id;
@@ -61,25 +61,75 @@ int main(int argc, char** argv)
 	else
 		printf ("Connected with the socket server!\n");
 
-	gtk_init(&argc, &argv);
-	dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_init (&argc, &argv);
+	dialog = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title (GTK_WINDOW (dialog), "GTK Guarder");
+//	gtk_widget_set_size_request (GTK_WIDGET (dialog), 768, 640);
 
-//	g_signal_connect(G_OBJECT(dialog), "delete_event",	G_CALLBACK(deleted), NULL);
+	hbox = gtk_hbox_new (FALSE, 5);
+	vbox1 = gtk_vbox_new (FALSE, 5);
+	vbox2 = gtk_vbox_new (FALSE, 5);
+
+	ImageFrame = gtk_frame_new ("Image");
+	SearchResultFrame = gtk_frame_new ("SearchResult");
+	GaitInfoFrame = gtk_frame_new ("Gait Info");
+
+	notebook = gtk_notebook_new ();
+	gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);
+
+	g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK (gtk_main_quit), NULL);
+	g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, CAPTURE_WIDTH, CAPTURE_HEIGHT);
 	image = gtk_image_new_from_pixbuf (pixbuf);
-	box = gtk_hbox_new (FALSE, 5);
-	gtk_box_pack_start (GTK_BOX (box), image, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (ImageFrame), image);
+	gtk_box_pack_start (GTK_BOX (vbox1), ImageFrame, FALSE, FALSE, 0);
 
-	sprintf(info, "frames per second: N/A\t\nseconds per frame: N/A");
+	sprintf (info, "frames per second: N/A\tseconds per frame: N/A");
 	for (i = 0; i < COLOR_TYPES; i++)
 	{
-		sprintf(append, "\n\n%s\n\tarea: N/A\n\taverage X: N/A\n\taverage Y: N/A", COLOR_NAME[i]);
+		sprintf(append, "\n%s\tarea: N/A\n\taverage X: N/A\taverage Y: N/A", COLOR_NAME[i]);
 		strcat(info, append);
 	}
-	text = gtk_label_new(info);
-	gtk_box_pack_start (GTK_BOX (box), text, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(dialog), box);
+	SearchResult = gtk_label_new(info);
+	gtk_container_add (GTK_CONTAINER (SearchResultFrame), SearchResult);
+	gtk_box_pack_start (GTK_BOX (vbox2), SearchResultFrame, FALSE, FALSE, 0);
+
+	strcpy (info, "");
+	for (i = 1; i <= 24; i++)
+	{
+		sprintf (append, "motor %d: N/A", i);
+		strcat (info, append);
+
+		if (i != 24)
+		{
+			if (!(i % 3))
+				sprintf (append, "\n");
+			else
+				sprintf (append, "\t");
+			strcat (info, append);
+		}
+	}
+	GaitInfo = gtk_label_new (info);
+	gtk_container_add (GTK_CONTAINER (GaitInfoFrame), GaitInfo);
+	gtk_box_pack_start (GTK_BOX (vbox2), GaitInfoFrame, FALSE, FALSE, 0);
+
+	SearchButton = gtk_check_button_new_with_label ("Do Searching");
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (SearchButton), TRUE);
+	g_signal_connect(G_OBJECT (SearchButton), "toggled", G_CALLBACK (StartStopSearching), NULL);
+	gtk_box_pack_start (GTK_BOX (vbox2), SearchButton, FALSE, FALSE, 0);
+
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), vbox2, gtk_label_new ("Information"));
+
+	vbox2 = gtk_vbox_new (FALSE, 5);
+	testinfo = gtk_label_new ("test information");
+	gtk_box_pack_start (GTK_BOX (vbox2), testinfo, FALSE, FALSE, 0);
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), vbox2, gtk_label_new ("test"));
+
+	gtk_container_add (GTK_CONTAINER (hbox), vbox1);
+	gtk_container_add (GTK_CONTAINER (hbox), notebook);
+
+	gtk_container_add(GTK_CONTAINER(dialog), hbox);
 
 	io_channel = g_io_channel_unix_new (sock_fd);
 	g_io_channel_set_encoding (io_channel, NULL, NULL);
@@ -111,11 +161,11 @@ int main(int argc, char** argv)
 
 	gtk_main();
 
-	gtk_widget_destroy(dialog);
-	close (sock_fd);
-	close (sock_frame_fd);
+//	gtk_widget_destroy(dialog);
 	g_io_channel_shutdown (io_channel, TRUE, NULL);
 	g_io_channel_shutdown (io_frame_channel, TRUE, NULL);
+	close (sock_fd);
+	close (sock_frame_fd);
 
 	return 0;
 }
