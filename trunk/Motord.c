@@ -3,10 +3,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "Motord.h"
 #include "BottomLayer.h"
@@ -17,9 +13,7 @@ int main (int argc, char **argv)
 	int ret, motors, i;
 	struct motor_step step_now;
 
-	int sockfd, sockresult, sock_id = MOTORD_ID, server_id;
-	socklen_t len;
-	struct sockaddr_in address;
+	int sockfd, server_id, sock_id = MOTORD_ID;
 
 #ifdef HAS_MOTORS
 	if ((motors = InitMotors ()) < 0)
@@ -29,27 +23,7 @@ int main (int argc, char **argv)
 	}
 #endif
 
-	sockfd = socket (AF_INET, SOCK_STREAM, 0);
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr ("127.0.0.1");
-	address.sin_port = htons(10200);
-	len = sizeof (address);
-
-	if ((sockresult = connect (sockfd, (struct sockaddr *) &address, len)) == -1)
-	{
-		perror ("oops: Visiond");
-		exit(-1);
-	}
-
-	write (sockfd, &sock_id, sizeof (int));
-	read (sockfd, &server_id, sizeof (int));
-	if ((server_id & ID_MASK) != SOCKET_LISTENER_ID)
-	{
-		printf ("Error: unknown socket server!\n");
-		exit(-1);
-	}
-	else
-		printf ("Connected with the socket server!\n");
+	sockfd = InitSocket (sock_id, "Motord", &server_id, LOCAL_ADDR);
 
 	step_now = step_init;
 #ifdef HAS_MOTORS

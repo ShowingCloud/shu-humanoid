@@ -2,10 +2,6 @@
  * Copyright (C) 2007 Wang Guoqin <wangguoqin1001@gmail.com>
  * May be copied or modified under the terms of the GNU General Public License.
  *
- * Picking up the colors from a window displaying the frame from camera by clicking. Click on 
- * the window, and that point will become black, and its HSV values are recorded. Then press one
- * key to indicate which color the points you clicked is to be, and their HSV values will be
- * saved to a file called "colordatafile.txt", which can be read by the scaning program.
  */
 
 #include <unistd.h>
@@ -15,13 +11,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <linux/types.h>
-#include <linux/videodev.h>
 
 #include "Visiond.h"
 #include "BottomLayer.h"
@@ -47,9 +36,7 @@ int main (int argc, char **argv)
 	struct VideoInfo video_info;
 	unsigned char *frame_map;
 
-	int sockfd, sockresult, sock_id = VISIOND_ID, server_id;
-	socklen_t len;
-	struct sockaddr_in address;
+	int sockfd, server_id;
 
 	if ((video = InitVideo ()) == -1)
 	{
@@ -63,27 +50,7 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	sockfd = socket (AF_INET, SOCK_STREAM, 0);
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr ("127.0.0.1");
-	address.sin_port = htons(10200);
-	len = sizeof (address);
-
-	if ((sockresult = connect (sockfd, (struct sockaddr *) &address, len)) == -1)
-	{
-		perror ("oops: Visiond");
-		exit(-1);
-	}
-
-	write (sockfd, &sock_id, sizeof (int));
-	read (sockfd, &server_id, sizeof (int));
-	if ((server_id & ID_MASK) != SOCKET_LISTENER_ID)
-	{
-		printf ("Error: unknown socket server!\n");
-		exit(-1);
-	}
-	else
-		printf ("Connected with the socket server!\n");
+	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR);
 
 	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 
@@ -95,7 +62,8 @@ int main (int argc, char **argv)
 
 	for(;;)
 	{
-		while ((offset = RetrieveFrame (video)) == -1);
+		while ((offset = RetrieveFrame (video)) == -1)
+			usleep (5000000);
 		if (server_id & DO_SEARCHING)
 			SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
 		if (server_id & NEED_FRAME)

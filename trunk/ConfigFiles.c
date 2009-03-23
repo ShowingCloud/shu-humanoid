@@ -9,10 +9,10 @@ int RecordColor(FILE *fp, struct HSVColors colors)
 	/*
 	 * Save the HSV values of one color to the file.
 	 * The file will look like this:
-	 * 0,red
+	 * 0,2,red
 	 * xxx,xxx,xxx
 	 * xxx,xxx,xxx
-	 * 2,blue
+	 * 2,1,blue
 	 * xxx,xxx,xxx
 	 * ...
 	 */
@@ -33,10 +33,10 @@ int ReadColor()
 	/*
 	 * Save the HSV values of one color to the file.
 	 * The file will look like this:
-	 * 1,red
+	 * 1,2,red
 	 * xxx,xxx,xxx
 	 * xxx,xxx,xxx
-	 * 3,blue
+	 * 3,1,blue
 	 * xxx,xxx,xxx
 	 * ...
 	 */

@@ -3,7 +3,6 @@
  * May be copied or modified under the terms of the GNU General Public License.
  *
  * Some inclusions, definitions, structures, varibles, and declarations for functions.
- * Only for My_Pickup.c right now.
  */
 
 #ifndef _Bottom_Layer_H_
@@ -19,6 +18,10 @@
 #define CAPTURE_HEIGHT 480
 #define CAPTURE_BPP 24
 #define FRAME_PER_SECOND 10
+
+#define LOCAL_ADDR "127.0.0.1"
+#define REMOTE_ADDR "192.168.234.66"
+//#define REMOTE_ADDR "192.168.234.69"
 
 struct motor_step
 {
@@ -54,5 +57,6 @@ int CloseShared (void *);
 int InitMotors ();
 int SendMotors (int, struct motor_step);
 struct motor_step ReadMotionFile (FILE *);
+int InitSocket (int, char *, int *, char *);
 
 #endif

@@ -2,19 +2,16 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "GtkFunc.h"
 #include "BottomLayer.h"
 #include "SocketServer.h"
 #include "Visiond.h"
+#include "ColorIdentify.h"
 
-int frame_id = 0, frame_inited = 0, do_searching = 1, gait_inited = 0;
+int frame_id = 0, frame_inited = 0, do_searching = 1, gait_inited = 0, pagenum = 1;
 unsigned char *frame_map, *frame_pointer;
-int gait_sockfd, gait_mutex = 0;
+int gait_sockfd, blocked_sockfd = 0;
 
 gboolean socket_event(GIOChannel* iochannel, GIOCondition condition, gpointer data)
 {
@@ -22,12 +19,9 @@ gboolean socket_event(GIOChannel* iochannel, GIOCondition condition, gpointer da
 	struct VideoInfo video_info;
 	int i, client_id = GTK_GUARDER_ID;
 
-	if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
-	{
+	if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
 		return 0;
-	}
-	else
-	{
+	} else {
 		read (g_io_channel_unix_get_fd (iochannel), &video_info, sizeof (struct VideoInfo));
 
 		if (do_searching)
@@ -37,9 +31,8 @@ gboolean socket_event(GIOChannel* iochannel, GIOCondition condition, gpointer da
 
 		write (g_io_channel_unix_get_fd (iochannel), &client_id, sizeof (int));
 
-		sprintf(info, "frames per second: %d\tseconds per frame: %f", video_info.fps, video_info.spf);
-		for (i = 0; i < COLOR_TYPES; i++)
-		{
+		sprintf(info, "frames per second: %d\tseconds per frame: %1.3f", video_info.fps, video_info.spf);
+		for (i = 0; i < COLOR_TYPES; i++) {
 			sprintf(append, "\n%s\tarea: %d\n\taverage X: %d\taverage Y: %d",
 					COLOR_NAME[i], video_info.area[i], video_info.aver_x[i], video_info.aver_y[i]);
 			strcat(info, append);
@@ -54,10 +47,8 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 	GdkPixbuf *pixbuf;
 	int client_id = GTK_GUARDER_FRAME_ID;
 
-	if (!frame_inited)
-	{
-		if (!(frame_map = (unsigned char *) malloc (CAPTURE_WIDTH * CAPTURE_HEIGHT * 3)))
-		{
+	if (!frame_inited) {
+		if (!(frame_map = (unsigned char *) malloc (CAPTURE_WIDTH * CAPTURE_HEIGHT * 3))) {
 			perror ("malloc");
 			exit(-1);
 		}
@@ -65,24 +56,28 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 		frame_pointer = frame_map;
 	}
 
-	if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
-	{
+	if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
 		return 0;
-	}
-	else
-	{
-		if (frame_id == 64) /* a whole frame has been translated */
-		{
+	} else {
+		if (frame_id == 640) { /* a whole frame has been transported */
 			pixbuf = gdk_pixbuf_new_from_data ((unsigned char *) frame_map, GDK_COLORSPACE_RGB, FALSE,
 					8, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * 3, NULL, NULL);
-			gtk_image_set_from_pixbuf (GTK_IMAGE (image), pixbuf);
+
+			if (pagenum == 0)
+				gtk_image_set_from_pixbuf (GTK_IMAGE (image_info), pixbuf);
+			else if (pagenum == 1)
+				gtk_image_set_from_pixbuf (GTK_IMAGE (image_vision), pixbuf);
 
 			frame_id = 0;
 			frame_pointer = frame_map;
 		}
 
 		read (g_io_channel_unix_get_fd (iochannel), frame_pointer, LARGEST_DATAGRAM);
-		write (g_io_channel_unix_get_fd (iochannel), &client_id, sizeof (int));
+
+		if (pagenum == 0 || pagenum == 1)
+			write (g_io_channel_unix_get_fd (iochannel), &client_id, sizeof (int));
+		else
+			blocked_sockfd = g_io_channel_unix_get_fd (iochannel);
 
 		frame_pointer += LARGEST_DATAGRAM;
 		frame_id++;
@@ -93,13 +88,10 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 
 gboolean StartStopSearching (GtkWidget *widget, gpointer data)
 {
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) 
-	{
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 		do_searching = 1;
 		return 1;
-	}
-	else
-	{
+	} else {
 		do_searching = 0;
 		return 1;
 	}
@@ -111,77 +103,92 @@ gboolean Adjusted (GtkAdjustment *adjustment, gpointer user_data)
 	char labeltxt[50];
 	struct motor_step step;
 
-	for (i = 0; i < MOTOR_NUM; i++)
-	{
+	for (i = 0; i < MOTOR_NUM; i++)	{
 		onestep = (int) gtk_adjustment_get_value (Adjustment[i]);
 		sprintf (labeltxt, "Motor %d: %d", i, onestep);
 		gtk_label_set_text ((GtkLabel *) ScrollLabel[i], labeltxt);
 		step.onestep[i] = onestep;
 	}
 
-	if (!gait_inited)
-	{
-		int result, sock_id = GAIT_ADJUST_ID;
-		socklen_t len;
-		struct sockaddr_in address;
-
-		gait_sockfd = socket (AF_INET, SOCK_STREAM, 0);
-		address.sin_family = AF_INET;
-		address.sin_addr.s_addr = inet_addr ("127.0.0.1");
-		address.sin_port = htons (10200);
-		len = sizeof (address);
-
-		if ((result = connect (gait_sockfd, (struct sockaddr *) &address, len)) == -1)
-		{
-			perror ("oops: Gait Adjustment");
-			exit(-1);
-		}
-	
-		write (gait_sockfd, &sock_id, sizeof (int));
-		read (gait_sockfd, &server_id, sizeof (int));
-		if ((server_id & ID_MASK) != SOCKET_LISTENER_ID)
-		{
-			printf ("Error: unknown socket server!\n");
-			exit(-1);
-		}
-		else
-			printf ("Connected with the socket server! (gait adjust)\n");
-
+	if (!gait_inited) {
+		gait_sockfd = InitSocket (GAIT_ADJUST_ID, "Gait Adjustment", &server_id, REMOTE_ADDR);
 		gait_inited = 1;
 	}
 
-	while (gait_mutex);
-	gait_mutex = 1;
+//	while (gait_mutex);
+//	gait_mutex = 1;
 	write (gait_sockfd, &step, sizeof (struct motor_step));
 	read (gait_sockfd, &server_id, sizeof (int));
-	gait_mutex = 0;
+//	gait_mutex = 0;
 
 	return 1;
 }
 
 gboolean PageChanged (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data)
 {
-	switch (page_num)
-	{
-		case 1:
-			if (gait_inited)
-			{
+	pagenum = page_num;
+
+	switch (page_num) {
+		case 0:
+			if (gait_inited) {
 				close (gait_sockfd);
 				gait_inited = 0;
 			}
+			if (blocked_sockfd) {
+				int client_id = GTK_GUARDER_FRAME_ID;
+				write (blocked_sockfd, &client_id, sizeof (int));
+				blocked_sockfd = 0;
+			}
+			break;
+		case 1:
+			if (gait_inited) {
+				close (gait_sockfd);
+				gait_inited = 0;
+			}
+			if (blocked_sockfd) {
+				int client_id = GTK_GUARDER_FRAME_ID;
+				write (blocked_sockfd, &client_id, sizeof (int));
+				blocked_sockfd = 0;
+			}
+			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (SearchButton), FALSE);
 			break;
 		case 2:
-			if (gait_inited)
-			{
-				close (gait_sockfd);
-				gait_inited = 0;
-			}
-			break;
-		case 3:
 			break;
 		default:
 			break;
 	}
+
+	return 1;
+}
+
+gboolean motion_notify (GtkWidget *event_box, GdkEventButton *event, gpointer callback_data)
+{
+	char text[500];
+	int c = event->y * CAPTURE_WIDTH + event->x;
+	struct HSVColor HSV;
+
+	if (frame_map) {
+		HSV = RGB2HSV (frame_map[c * 3], frame_map[c * 3 + 1], frame_map[c * 3 + 2]);
+		sprintf (text, "Point Property:\nX: %3d\t\tY: %3d\nR: %3d\t\tG: %3d\t\tB: %3d\nH: %3d\t\tS: %3d\t\tV: %3d",
+				(int) event->x, (int) event->y,
+				frame_map[c * 3], frame_map[c * 3 + 1], frame_map[c * 3 + 2],
+				HSV.H, HSV.S, HSV.V);
+	} else
+		sprintf (text, "Point Property:\nX: %3d\t\tY: %3d\nR: N/A\t\tG: N/A\t\tB: N/A\nH: N/A\t\tS: N/A\t\tV: N/A",
+				(int) event->x, (int) event->y);
+
+	gtk_label_set_text ((GtkLabel *) point_info, text);
+
+	return 1;
+}
+
+gboolean button_press (GtkWidget *event_box, GdkEventButton *event, gpointer callback_data)
+{
+	char text[500];
+
+	sprintf (text, "Point Property:\nX: %d\tY: %d\nR: %d\tG: %d\tB: %d\nH: %d\tS: %d\tV: %d",
+			(int) event->x, (int) event->y, 0, 0, 0, 0, 0, 0);
+	gtk_label_set_text ((GtkLabel *) point_info, text);
 
 	return 1;
 }

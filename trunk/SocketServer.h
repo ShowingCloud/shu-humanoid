@@ -3,7 +3,6 @@
  * May be copied or modified under the terms of the GNU General Public License.
  *
  * Some inclusions, definitions, structures, varibles, and declarations for functions.
- * Only for My_Pickup.c right now.
  */
 
 #ifndef _Socket_Server_H_
@@ -25,7 +24,7 @@
 
 #define DATAGRAM_ID_MASK 0x3F00
 
-#define LARGEST_DATAGRAM 14400
+#define LARGEST_DATAGRAM 1440
 
 static const char SOCKET_ID[][20] = {
 	"Socket Listener",
@@ -37,21 +36,15 @@ static const char SOCKET_ID[][20] = {
 	"Gait Adjust"};
 static const int MAX_CLIENTS[] = {1, 1, 10, 10, 10, 1, 1};
 
+struct ClientOper
+{
+	int (*Serve) (int fd);
+	int (*Break) (int fd);
+};
+
 #include "Common.h"
 
 int SelectClient (int);
-int ServeBreakClient (int, int, int);
-int ServeVisiond (int);
-int BreakVisiond (int);
-int ServeConsoleGuarder (int);
-int BreakConsoleGuarder (int);
-int ServeGtkGuarder (int);
-int BreakGtkGuarder (int);
-int ServeGtkGuarderFrame (int);
-int BreakGtkGuarderFrame (int);
-int ServeMotord (int);
-int BreakMotord (int);
-int ServeGaitAdjust (int);
-int BreakGaitAdjust (int);
+int InitClient ();
 
 #endif
