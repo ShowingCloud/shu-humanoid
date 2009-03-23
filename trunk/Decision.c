@@ -19,7 +19,8 @@
 #include "Visiond.h"
 
 int client_index[SOCKET_IDS], steps_start, stepe_start, steps_middle, stepe_middle, step_status = 0, step_start;
-struct motor_step step_now, step_last, steps[200];
+int stepe_end, steps_end, stepe_tl, steps_tl;
+struct motor_step step_now, step_last, steps[400];
 
 void ReadDecision ()
 {
@@ -48,20 +49,60 @@ void ReadDecision ()
 	}
 	stepe_middle--;
 	fclose (fp);
+	steps_end = stepe_end = stepe_middle;
+	fp = fopen ("pace/10-26/WalkEnd", "r");
+	while (!feof (fp)) {
+		for (i = 0; i < 24; i++) {
+			fscanf (fp, "%d,", &tmp);
+			steps[stepe_end].onestep[i] = tmp;
+		}
+		stepe_end++;
+	}
+	stepe_end--;
+	fclose (fp);
+	steps_tl = stepe_tl = stepe_end;
+	fp = fopen ("pace/10-26/TurnLeft", "r");
+	while (!feof (fp)) {
+		for (i = 0; i < 24; i++) {
+			fscanf (fp, "%d,", &tmp);
+			steps[stepe_tl].onestep[i] = tmp;
+		}
+		stepe_tl++;
+	}
+	stepe_tl--;
+	fclose (fp);
 }
 
 int MakeDecision (struct VideoInfo video_info, int *steps)
 {
 	switch (step_status) {
 	case 0:
-		step_status = 1;
 		*steps = steps_start;
+		step_status++;
 		return (stepe_start - steps_start);
-	case 1:
+	case 1: case 2: case 3: case 4:
+	case 5: case 6: case 7: case 8:
 		*steps = steps_middle;
+		step_status++;
+		return (stepe_middle - steps_middle);
+	case 9:
+		*steps = steps_end;
+		step_status++;
+		return (stepe_end - steps_end);
+	case 10: case 11: case 12:
+		*steps = steps_tl;
+		step_status++;
+		return (stepe_tl - steps_tl);
+	case 13:
+		*steps = steps_start;
+		step_status++;
+		return (stepe_start - steps_start);
+	case 14:
+		*steps = steps_middle;
+//		step_status++;
 		return (stepe_middle - steps_middle);
 	}
-	return 1;
+	return 0;
 }
 
 struct motor_step MakeHeadServo (struct VideoInfo video_info)
