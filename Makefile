@@ -4,8 +4,8 @@ LDFLAGS		= $(shell pkg-config --libs gtk+-2.0)
 
 obj_Visiond	= Visiond.o QueueOper.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o BottomLayer.o
-obj_Gtk		= GtkGuarder.o GtkFunc.o BottomLayer.o ColorIdentify.o
-obj_Socket	= SocketServer.o BottomLayer.o
+obj_Gtk		= GtkGuarder.o GtkFunc.o BottomLayer.o ConfigFiles.o
+obj_Socket	= SocketServer.o BottomLayer.o ConfigFiles.o
 obj_Motord	= Motord.o BottomLayer.o
 
 all: Visiond ConsoleGuarder GtkGuarder SocketServer Motord

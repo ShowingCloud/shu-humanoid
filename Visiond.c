@@ -27,7 +27,7 @@ int SearchForColor (unsigned char *frame, struct Queue *ScatteringQueue, struct 
 	return 1;
 }
 
-int main (int argc, char **argv)
+int main (void)
 {
 	int video, offset;
 	struct Queue *ScatteringQueue, *SpreadingQueue;
@@ -50,7 +50,7 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
+	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR);
 
 	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 

@@ -15,13 +15,13 @@
 #include "SocketServer.h"
 #include "Visiond.h"
 
-int main(int argc, char** argv)
+int main (void)
 {
 	int sockfd, server_id, i;
 	struct VideoInfo video_info;
 	char info[500], append[300];
 
-	sockfd = InitSocket (CONSOLE_GUARDER_ID, "Console Guarder", &server_id, REMOTE_ADDR, SOCKET_TCP, 0);
+	sockfd = InitSocket (CONSOLE_GUARDER_ID, "Console Guarder", &server_id, REMOTE_ADDR);
 
 	for (;;)
 	{

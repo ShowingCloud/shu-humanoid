@@ -11,7 +11,8 @@
 #include "Common.h"
 #include "QueueOper.h"
 
-struct VideoInfo {
+struct VideoInfo
+{
 	int fps;
 	float spf;
 	int area[COLOR_TYPES];
