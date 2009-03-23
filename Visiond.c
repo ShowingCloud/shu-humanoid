@@ -50,7 +50,7 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR);
+	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
 
 	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 

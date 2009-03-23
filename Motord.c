@@ -23,7 +23,7 @@ int main (int argc, char **argv)
 	}
 #endif
 
-	sockfd = InitSocket (sock_id, "Motord", &server_id, LOCAL_ADDR);
+	sockfd = InitSocket (sock_id, "Motord", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
 
 	step_now = step_init;
 #ifdef HAS_MOTORS

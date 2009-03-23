@@ -24,8 +24,6 @@
 
 #define DATAGRAM_ID_MASK 0x3F00
 
-#define LARGEST_DATAGRAM 1440
-
 static const char SOCKET_ID[][20] = {
 	"Socket Listener",
 	"Visiond",
@@ -36,8 +34,7 @@ static const char SOCKET_ID[][20] = {
 	"Gait Adjust"};
 static const int MAX_CLIENTS[] = {1, 1, 10, 10, 10, 1, 1};
 
-struct ClientOper
-{
+struct ClientOper {
 	int (*Serve) (int fd);
 	int (*Break) (int fd);
 };

@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 	char info[500], append[300], labeltxt[50];
 	GIOChannel *io_channel, *io_frame_channel;
 
-	sock_fd = InitSocket (GTK_GUARDER_ID, "Gtk Guarder", &server_id, REMOTE_ADDR);
+	sock_fd = InitSocket (GTK_GUARDER_ID, "Gtk Guarder", &server_id, REMOTE_ADDR, SOCKET_TCP, 0);
 
 	gtk_init (&argc, &argv);
 	dialog = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 	g_io_channel_set_encoding (io_channel, NULL, NULL);
 	g_io_add_watch (io_channel, (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL), socket_event, NULL);
 
-	sock_frame_fd = InitSocket (GTK_GUARDER_FRAME_ID, "Gtk Guarder Frame", &server_id, REMOTE_ADDR);
+	sock_frame_fd = InitSocket (GTK_GUARDER_FRAME_ID, "Gtk Guarder Frame", &server_id, REMOTE_ADDR, SOCKET_UDP, 1);
 
 	io_frame_channel = g_io_channel_unix_new (sock_frame_fd);
 	g_io_channel_set_encoding (io_frame_channel, NULL, NULL);
