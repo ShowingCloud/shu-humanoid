@@ -17,6 +17,9 @@
 
 
 #define VIDEO_DEV "/dev/video0"
+#define MOTORS_DEV "/dev/motors"
+
+#define RM_EXEC_STEP 1
 
 
 #define COLOR_FILE "colordatafile.txt" /* file to save picked HSV values */
@@ -55,7 +58,7 @@ static const int COLOR_VALUE_RGB[][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, 
 #define FRAME_PER_SECOND 10
 
 
-#define SOCKET_IDS 5
+#define SOCKET_IDS 6
 #define ID_MASK 0x000F
 
 #define SOCKET_LISTENER_ID 0x0000
@@ -63,6 +66,7 @@ static const int COLOR_VALUE_RGB[][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, 
 #define CONSOLE_GUARDER_ID 0x0002
 #define GTK_GUARDER_ID 0x0003
 #define GTK_GUARDER_FRAME_ID 0x0004
+#define MOTORD_ID 0x0005
 
 #define NEED_FRAME 0x0010
 #define DO_SEARCHING 0x0020
@@ -171,6 +175,8 @@ struct motor_response
 	unsigned short retcode;
 };
 
+static const struct motor_step step_init = {{82,139,82,27,77,57,86,11,109,104,89,99,180,0,0,0,0,0,0,0,0,0,0,0}};
+
 /* in Visiond.c */
 int SearchForColor(unsigned char *, struct FrameQueue *, struct FrameQueue *);
 
@@ -196,7 +202,7 @@ int RecordColor(FILE *, struct HSVColors);
 int ReadColor();
 
 #ifdef HAS_GTK
-/* in GtkOper.c */
+/* in GtkFunc.c */
 gboolean deleted (GtkWidget *, GdkEvent *, gpointer);
 gboolean socket_event (GIOChannel *, GIOCondition, gpointer);
 gboolean socket_frame_event (GIOChannel *, GIOCondition, gpointer);
@@ -230,5 +236,7 @@ int ServeGtkGuarder (int);
 int BreakGtkGuarder (int);
 int ServeGtkGuarderFrame (int);
 int BreakGtkGuarderFrame (int);
+int ServeMotord (int);
+int BreakMotord (int);
 
 #endif

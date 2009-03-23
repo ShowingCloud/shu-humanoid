@@ -1,1 +1,0 @@
-../GtkOper.c
