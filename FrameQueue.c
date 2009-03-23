@@ -18,10 +18,7 @@ int Enqueue(struct FrameQueue *queue, int item)
 int Dequeue(struct FrameQueue *queue)
 {
 	if (queue->head <= queue->tail)
-	{
-		queue->head++;
-		return queue->item[queue->head - 2];
-	}
+		return queue->item[queue->head++];
 	else
 		return -1;
 }
