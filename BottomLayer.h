@@ -16,8 +16,8 @@
 #define RM_EXEC_STEP 1
 #define MOTOR_NUM 24
 
-#define CAPTURE_WIDTH 320
-#define CAPTURE_HEIGHT 240
+#define CAPTURE_WIDTH 640
+#define CAPTURE_HEIGHT 480
 #define CAPTURE_BPP 24
 #define FRAME_PER_SECOND 10
 
@@ -67,7 +67,7 @@ void *InitShared (char *);
 void *OpenShared (char *);
 int CloseShared (void *);
 int InitMotors ();
-int SendMotors (int, struct motor_step);
+inline int SendMotors (int, struct motor_step);
 struct motor_step ReadMotionFile (FILE *);
 int InitSocket (int, char *, int);
 
