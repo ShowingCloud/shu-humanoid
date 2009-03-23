@@ -226,27 +226,18 @@ int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20], 
 		return sockfd;
 	}
 
-	if (connection == SOCKET_TCP) {
-		if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1) {
-			perror (sock_name);
-			exit (-1);
-		}
-		write (sockfd, &sock_id, sizeof (int));
-		read (sockfd, server_id, sizeof (int));
-		if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID) {
-			printf ("Error: unknown socket server!\n");
-			exit (-1);
-		} else {
-			printf ("Connected with the socket server! (%s)\n", sock_name);
-			return sockfd;
-		}
-	} else {
-//		sendto (sockinfo.sockfd, &sock_id, sizeof (int), 0,
-//				(struct sockaddr *) &sockinfo.address, sockinfo.len);
-//		recvfrom (sockinfo.sockfd, server_id, sizeof (int), 0,
-//				(struct sockaddr *) &sockinfo.address, &sockinfo.len);
-//		printf ("Connected with the socket server! (Gtk Guarder (Frame))\n");
-		return sockfd;
+	if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1) {
+		perror (sock_name);
+		exit (-1);
 	}
 
+	write (sockfd, &sock_id, sizeof (int));
+	read (sockfd, server_id, sizeof (int));
+	if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID) {
+		printf ("Error: unknown socket server!\n");
+		exit (-1);
+	} else {
+		printf ("Connected with the socket server! (%s)\n", sock_name);
+		return sockfd;
+	}
 }
