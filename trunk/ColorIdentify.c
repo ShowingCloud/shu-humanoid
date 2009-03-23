@@ -1,20 +1,22 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "MyVision.h"
 
-struct PointMatched PointMatch(IplImage *frame, int Coordinate, int color)
+struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 {
 	int i;
 	
 	if (Coordinate < 0 || Coordinate >= CAPTURE_WIDTH * CAPTURE_HEIGHT
-			|| (Index_Coordinate[Coordinate] <= Index_Length
+			|| (Index_Coordinate[Coordinate] <= Index_Length && Index_Coordinate[Coordinate] != 0
 				&& Index_Number[Index_Coordinate[Coordinate]] == Coordinate))
 	{
 		struct PointMatched ret = {0, COLOR_TYPES, -1, -1, -1};
 		return ret;
 	}
 
-	struct HSVColor HSV = RGB2HSV((unsigned char)frame->imageData[Coordinate * 3 + 2],
-		(unsigned char)frame->imageData[Coordinate * 3 + 1],
-		(unsigned char)frame->imageData[Coordinate * 3]);
+	struct HSVColor HSV = RGB2HSV(frame[Coordinate * 3], frame[Coordinate * 3 + 1], frame[Coordinate * 3 + 2]);
 
 	if (color == -1)
 		for (i = 0; i < COLOR_TYPES; i++)
