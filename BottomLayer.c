@@ -16,9 +16,9 @@
 
 #include <linux/types.h>
 #include <linux/videodev.h>
- 
+
 #include "BottomLayer.h"
-#include "Decision.h"
+#include "SocketServer.h"
 
 struct video_mmap map;
 struct video_mbuf mbuf;
@@ -59,7 +59,6 @@ int InitVideo ()
 	}
 	pic.depth = CAPTURE_BPP;
 	pic.palette = VIDEO_PALETTE_RGB24;
-	pic.brightness = 20000;
 	if (ioctl (file, VIDIOCSPICT, &pic) < 0) {
 		perror("VIDIOCSPICT");
 		return -1;
@@ -117,6 +116,44 @@ int Closevideo (int video)
 	return 1;
 }
 
+void *InitShared (char *tempfile)
+{
+	int shared_fd;
+	void *map;
+
+	if (tempfile)
+		shared_fd = open (tempfile, O_CREAT|O_RDWR|O_TRUNC , 00777);
+	printf ("Share file %s opened.\n", tempfile);
+
+	lseek (shared_fd, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3 - 1, SEEK_SET);
+	write (shared_fd, "" , 1);
+
+	map = mmap (NULL, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0);
+
+	close (shared_fd);
+
+	return map;
+}
+
+void *OpenShared (char *tempfile)
+{
+	int shared_fd = open(tempfile, O_CREAT|O_RDWR, 00777);
+	void *map;
+
+	map = mmap (NULL, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3, PROT_READ|PROT_WRITE, MAP_SHARED, shared_fd, 0);
+
+	close (shared_fd);
+
+	return map;
+}
+
+int CloseShared (void *map)
+{
+	munmap (map, mbuf.size);
+
+	return 1;
+}
+
 int InitMotors ()
 {
 	int file;
@@ -129,16 +166,9 @@ int InitMotors ()
 	return file;
 }
 
-inline int SendMotors (int file, struct motor_step step)
+int SendMotors (int file, struct motor_step step)
 {
 	struct motor_response ret;
-	static struct timeval time_l = {0, 0};
-	struct timeval time_n;
-
-	gettimeofday (&time_n, 0);
-	if ((time_n.tv_sec - time_l.tv_sec) < 1 && (time_n.tv_usec - time_l.tv_usec) < 15000)
-		return -1;
-	time_l = time_n;
 
 	if (ioctl (file, RM_EXEC_STEP, &step) < 0) {
 		perror ("RM_EXEC_STEP");
@@ -166,13 +196,22 @@ struct motor_step ReadMotionFile (FILE *file)
 	return ret;
 }
 
-int InitSocket (int sock_id, char addr[20], int server)
+int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20], int connection, int server)
 {
-	int result, sockfd;
+	int result;
+	int sockfd;
 	struct sockaddr_in address;
 	socklen_t len;
 
-	sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (connection == SOCKET_TCP)
+		sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	else if (connection == SOCKET_UDP)
+		sockfd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	else {
+		printf ("Connection type %d not supported!\n", connection);
+		exit (-1);
+	}
+
 	address.sin_family = AF_INET;
 	if (server)
 		address.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -188,10 +227,17 @@ int InitSocket (int sock_id, char addr[20], int server)
 	}
 
 	if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1) {
-		perror ("connect");
+		perror (sock_name);
 		exit (-1);
 	}
 
 	write (sockfd, &sock_id, sizeof (int));
-	return sockfd;
+	read (sockfd, server_id, sizeof (int));
+	if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID) {
+		printf ("Error: unknown socket server!\n");
+		exit (-1);
+	} else {
+		printf ("Connected with the socket server! (%s)\n", sock_name);
+		return sockfd;
+	}
 }
