@@ -24,19 +24,24 @@
 #include <linux/videodev.h>
 
 #include "Visiond.h"
+#include "BottomLayer.h"
+#include "SocketServer.h"
+#include "QueueOper.h"
+#include "ScatterSpread.h"
+#include "ConfigFiles.h"
 
-int SearchForColor(unsigned char *frame, struct FrameQueue *ScatteringQueue, struct FrameQueue *SpreadingQueue)
+int SearchForColor (unsigned char *frame, struct Queue *ScatteringQueue, struct Queue *SpreadingQueue)
 {
-	Scattering(ScatteringQueue);
-	SpreadPoints(frame, ScatteringQueue, SpreadingQueue);
+	Scattering (ScatteringQueue);
+	SpreadPoints (frame, ScatteringQueue, SpreadingQueue);
 
 	return 1;
 }
 
-int main(int argc, char **argv)
+int main (int argc, char **argv)
 {
 	int video, offset;
-	struct FrameQueue *ScatteringQueue, *SpreadingQueue;
+	struct Queue *ScatteringQueue, *SpreadingQueue;
 	int frames = 0, frame_count = -1, i;
 	struct timeval time_n, time_l, time_s;
 	struct VideoInfo video_info;
@@ -82,8 +87,8 @@ int main(int argc, char **argv)
 
 	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 
-	ScatteringQueue = InitQueue ();
-	SpreadingQueue = InitQueue ();
+	ScatteringQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
+	SpreadingQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
 
 	gettimeofday (&time_n, 0);
 	time_s = time_l = time_n;
@@ -120,8 +125,8 @@ int main(int argc, char **argv)
 		read (sockfd, &server_id, sizeof (int));
 	}
 
-	free (ScatteringQueue);
-	free (SpreadingQueue);
+	FreeQueue (ScatteringQueue);
+	FreeQueue (SpreadingQueue);
 	close (sockfd);
 
 	return 0;

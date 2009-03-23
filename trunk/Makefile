@@ -1,8 +1,8 @@
 CC		= gcc
-CFLAGS		= -I. -O0 -g -Wall -Wextra $(shell pkg-config --cflags gtk+-2.0) -DHAS_GTK -DVERBOSE
+CFLAGS		= -I. -O2 -g -Wall -Wextra $(shell pkg-config --cflags gtk+-2.0) -DHAS_GTK -DVERBOSE
 LDFLAGS		= $(shell pkg-config --libs gtk+-2.0)
 
-obj_Visiond	= Visiond.o FrameQueue.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
+obj_Visiond	= Visiond.o QueueOper.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o
 obj_Gtk		= GtkGuarder.o GtkFunc.o
 obj_Socket	= SocketServer.o BottomLayer.o

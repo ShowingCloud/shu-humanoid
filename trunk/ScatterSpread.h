@@ -16,6 +16,23 @@
 #define TRAVERSAL_INTERVAL_X 1
 #define TRAVERSAL_INTERVAL_Y 1
 
+#include "QueueOper.h"
+#include "BottomLayer.h"
+#include "ColorIdentify.h"
+
+int Index_Coordinate[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Number[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Length;
+
+struct SearchResult
+{
+	int area;
+	int aver_x;
+	int aver_y;
+} result[COLOR_TYPES];
+
 #include "Common.h"
+
+int Scattering(struct Queue *);
+int SpreadPoints(unsigned char *, struct Queue *, struct Queue *);
+int Spreading(unsigned char *, struct Queue *, int);
 
 #endif

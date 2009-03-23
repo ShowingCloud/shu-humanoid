@@ -11,17 +11,23 @@
 
 #include "Common.h"
 
-struct ColorIdentifier
+struct PointMatched
 {
-	int aver_H;
-	int upper_limit_H;
-	int lower_limit_H;
-	int aver_S;
-	int upper_limit_S;
-	int lower_limit_S;
-	int aver_V;
-	int upper_limit_V;
-	int lower_limit_V;
-} identifier[COLOR_TYPES];
+	int capable;
+	int color;
+	int deviation_H;
+	int deviation_S;
+	int deviation_V;
+};
+
+struct HSVColor
+{
+	int H;
+	int S;
+	int V;
+}; /* a set of HSV values, of one point */
+
+struct HSVColor RGB2HSV(int, int, int);
+struct PointMatched PointMatch(unsigned char *, int, int);
 
 #endif

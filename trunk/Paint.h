@@ -13,4 +13,7 @@
 
 static const int COLOR_VALUE_RGB[][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {255, 255, 255}, {0, 0, 0}};
 
+int PrintColor(unsigned char *, int, int);
+int DrawBigPoint(unsigned char *, int, int, int);
+
 #endif
