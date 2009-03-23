@@ -9,6 +9,7 @@
 #define _COnfig_Files_H_
 
 #define COLOR_FILE ".colorsrc" /* file to save picked HSV values */
+#define STEP_INIT_FILE ".stepinitrc" /* file to save initial steps */
 
 #define H_OVERMEASURE 0
 #define S_OVERMEASURE 0
@@ -16,6 +17,7 @@
 
 #include "Common.h"
 #include "ColorIdentify.h"
+#include "BottomLayer.h"
 
 struct HSVColors {
 	struct HSVColor HSVColor[MAX_POINTS_PER_COLOR];
@@ -37,5 +39,7 @@ struct ColorIdentifier {
 
 int RecordColor(FILE *, struct HSVColors);
 int ReadColor();
+int RecordInitStep(struct motor_step);
+struct motor_step ReadInitStep();
 
 #endif
