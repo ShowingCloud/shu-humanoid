@@ -6,11 +6,13 @@
 #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <linux/types.h>
 #include <linux/videodev.h>
 
-#include "MyVision.h"
+#include "BottomLayer.h"
 
 struct video_mmap map;
 struct video_mbuf mbuf;
@@ -190,9 +192,9 @@ int InitMotors ()
 {
 	int file;
 
-	if ((file = open ("/dev/motors", O_RDWR)) < 0)
+	if ((file = open (MOTORS_DEV, O_RDWR)) < 0)
 	{
-		perror ("/dev/motors");
+		perror (MOTORS_DEV);
 		return -1;
 	}
 	
@@ -203,19 +205,17 @@ int SendMotors (int file, struct motor_step step)
 {
 	struct motor_response ret;
 
-//	if (ioctl (file, RM_EXEC_STEP, &step) < 0)
-	if (ioctl (file, 1, &step) < 0)
+	if (ioctl (file, RM_EXEC_STEP, &step) < 0)
 	{
 		perror ("RM_EXEC_STEP");
 		return -1;
 	}
 
-//	usleep (10000);
 	do
 		read (file, &ret, sizeof (struct motor_response));
-	while (ret.retcode != 0);
+	while (ret.runmode != RM_EXEC_STEP);
 
-	return 1;
+	return ret.retcode;
 }
 
 struct motor_step ReadMotionFile (FILE *file)

@@ -1,16 +1,16 @@
 CC		= gcc
-CFLAGS		= -I. -O0 -g -Wall -Wextra $(shell pkg-config --cflags gtk+-2.0) -DHAS_GTK
+CFLAGS		= -I. -O0 -g -Wall -Wextra $(shell pkg-config --cflags gtk+-2.0) -DHAS_GTK -DVERBOSE
 LDFLAGS		= $(shell pkg-config --libs gtk+-2.0)
 
-obj_Visiond	= Visiond.o FrameQueue.o ColorFileOper.o Paint.o Scatter_Spread.o ColorIdentify.o BottomLayer.o
+obj_Visiond	= Visiond.o FrameQueue.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o
 obj_Gtk		= GtkGuarder.o GtkFunc.o
 obj_Socket	= SocketServer.o BottomLayer.o
-obj_Motors	= Motors.o BottomLayer.o
+obj_Motord	= Motord.o BottomLayer.o
 
-all: Visiond ConsoleGuarder GtkGuarder SocketServer Motors
+all: Visiond ConsoleGuarder GtkGuarder SocketServer Motord
 
-%.o: %.c MyVision.h Makefile
+%.o: %.c %.c Common.h Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 Visiond: $(obj_Visiond)
@@ -25,8 +25,8 @@ GtkGuarder: $(obj_Gtk)
 SocketServer: $(obj_Socket)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(obj_Socket)
 
-Motors: $(obj_Motors)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(obj_Motors)
+Motord: $(obj_Motord)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(obj_Motord)
 
 clean:
-	rm -f $(obj_Visiond) $(obj_Console) $(obj_Gtk) $(obj_Socket) $(obj_Motors) Visiond ConsoleGuarder GtkGuarder SocketServer Motors
+	rm -f $(obj_Visiond) $(obj_Console) $(obj_Gtk) $(obj_Socket) $(obj_Motord) Visiond ConsoleGuarder GtkGuarder SocketServer Motord

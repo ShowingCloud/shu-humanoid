@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "MyVision.h"
+#include "Paint.h"
 
 int PrintColor(unsigned char *frame, int c, int color)
 {

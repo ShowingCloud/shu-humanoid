@@ -13,13 +13,15 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 
-#include "MyVision.h"
+#include "SocketServer.h"
 
 int has_video_info = 0, shared_inited = 0, frame_id = 64, frame_ready = 0;
 struct VideoInfo video_info;
 int client_index[SOCKET_IDS][10], client_nums[SOCKET_IDS];
 int listener_status = SOCKET_LISTENER_ID | DO_SEARCHING;
 unsigned char *frame_map, *frame_pointer;
+struct motor_step step_now, step_last;
+int updown = 0;
 
 int main(int argc, char **argv)
 {
@@ -39,6 +41,8 @@ int main(int argc, char **argv)
 			client_index[i][j] = 0;
 		client_nums[i] = 0;
 	}
+
+	step_now = step_last = step_init;
 
 	listener_sockfd = socket (AF_INET, SOCK_STREAM, 0);
 	listener_address.sin_family = AF_INET;
@@ -74,7 +78,9 @@ int main(int argc, char **argv)
 					client_sockfd = accept (listener_sockfd, (struct sockaddr *) &client_address,
 							&client_len);
 					FD_SET (client_sockfd, &readfds);
+#ifdef VERBOSE
 					printf ("Adding client on fd %d\n", client_sockfd);
+#endif
 					if (client_sockfd > max_fd) max_fd = client_sockfd;
 				}
 				else
@@ -161,6 +167,9 @@ int ServeBreakClient (int fd, int client_id, int ServeBreak)
 			case GTK_GUARDER_FRAME_ID:
 				ServeGtkGuarderFrame (fd);
 				break;
+			case MOTORD_ID:
+				ServeMotord (fd);
+				break;
 			default:
 				break;
 		}
@@ -181,6 +190,9 @@ int ServeBreakClient (int fd, int client_id, int ServeBreak)
 			case GTK_GUARDER_FRAME_ID:
 				BreakGtkGuarderFrame (fd);
 				break;
+			case MOTORD_ID:
+				BreakMotord (fd);
+				break;
 			default:
 				break;
 		}
@@ -193,7 +205,9 @@ int ServeVisiond (int fd)
 {
 	int i;
 
+#ifdef VERBOSE
 	printf ("Serving Visiond. param: %d\n", listener_status);
+#endif
 
 	read (fd, &video_info, sizeof (struct VideoInfo));
 	write (fd, &listener_status, sizeof (int));
@@ -220,7 +234,6 @@ int ServeVisiond (int fd)
 		{
 			frame_ready = 0;
 			listener_status |= NEED_FRAME;
-			frame_pointer = frame_map;
 			frame_id = 65;
 		}
 		else if (frame_id == 65)
@@ -231,6 +244,7 @@ int ServeVisiond (int fd)
 		else if (frame_id == 0)
 		{
 			frame_ready = 1;
+			frame_pointer = frame_map;
 
 			for (i = 0; i < 10; i++)
 				if (client_index[GTK_GUARDER_FRAME_ID][i] != 0)
@@ -245,7 +259,9 @@ int ServeVisiond (int fd)
 
 int BreakVisiond (int fd)
 {
+#ifdef VERBOSE
 	printf ("Stopping Visiond.\n");
+#endif
 
 	has_video_info = 0;
 
@@ -257,14 +273,18 @@ int BreakVisiond (int fd)
 
 int ServeConsoleGuarder (int fd)
 {
+#ifdef VERBOSE
 	printf ("Serving Console Guarder.\n");
+#endif
 
 	return 1;
 }
 
 int BreakConsoleGuarder (int fd)
 {
+#ifdef VERBOSE
 	printf ("Stopping Console Guarder.\n");
+#endif
 
 	return 1;
 }
@@ -273,7 +293,9 @@ int ServeGtkGuarder (int fd)
 {
 	int client_id;
 
+#ifdef VERBOSE
 	printf ("Serving Gtk Guarder.\n");
+#endif
 
 	read (fd, &client_id, sizeof (int));
 
@@ -287,7 +309,9 @@ int ServeGtkGuarder (int fd)
 
 int BreakGtkGuarder (int fd)
 {
+#ifdef VERBOSE
 	printf ("Stopping Gtk Guarder.\n");
+#endif
 
 	if (client_nums[GTK_GUARDER_ID] == 0)
 	{
@@ -302,7 +326,9 @@ int ServeGtkGuarderFrame (int fd)
 {
 	int client_id;
 
+#ifdef VERBOSE
 	printf ("Serving Gtk Guarder (Frame).\n");
+#endif
 
 	read (fd, &client_id, sizeof (int));
 
@@ -318,7 +344,50 @@ int ServeGtkGuarderFrame (int fd)
 
 int BreakGtkGuarderFrame (int fd)
 {
+#ifdef VERBOSE
 	printf ("Stopping Gtk Guarder (Frame).\n");
+#endif
+
+	return 1;
+}
+
+int ServeMotord (int fd)
+{
+	int client_id;
+
+#ifdef VERBOSE
+	printf ("Serving Motord.\n");
+#endif
+
+	if (step_now.onestep[0] < 110 && step_now.onestep[0] > 60)
+		if (updown)
+			step_now.onestep[0]++;
+		else
+			step_now.onestep[0]--;
+	else
+	{
+		updown ^= 1;
+
+		if (updown)
+			step_now.onestep[0]++;
+		else
+			step_now.onestep[0]--;
+	}
+
+
+	read (fd, &client_id, sizeof (int));
+	write (fd, &step_now, sizeof (struct motor_step));
+
+	step_last = step_now;
+
+	return 1;
+}
+
+int BreakMotord (int fd)
+{
+#ifdef VERBOSE
+	printf ("Stopping Motord.\n");
+#endif
 
 	return 1;
 }
