@@ -24,7 +24,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "MyVision.h"
+#include "GtkGuarder.h"
 
 GtkWidget *dialog, *SearchResult, *GaitInfo, *image;
 

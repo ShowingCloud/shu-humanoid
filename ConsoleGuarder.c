@@ -18,7 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "MyVision.h"
+#include "ConsoleGuarder.h"
 
 int main(int argc, char** argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
 	write (sockfd, &sock_id, sizeof (int));
 	read (sockfd, &server_id, sizeof (int));
-	if (server_id != SOCKET_LISTENER_ID)
+	if ((server_id & ID_MASK) != SOCKET_LISTENER_ID)
 	{
 		printf ("Error: unknown socket server!\n");
 		exit(-1);

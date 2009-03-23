@@ -23,7 +23,7 @@
 #include <linux/types.h>
 #include <linux/videodev.h>
 
-#include "MyVision.h"
+#include "Visiond.h"
 
 int SearchForColor(unsigned char *frame, struct FrameQueue *ScatteringQueue, struct FrameQueue *SpreadingQueue)
 {
@@ -82,10 +82,10 @@ int main(int argc, char **argv)
 
 	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 
-	ScatteringQueue = InitQueue();
-	SpreadingQueue = InitQueue();
+	ScatteringQueue = InitQueue ();
+	SpreadingQueue = InitQueue ();
 
-	gettimeofday(&time_n, 0);
+	gettimeofday (&time_n, 0);
 	time_s = time_l = time_n;
 
 	for(;;)
@@ -120,8 +120,8 @@ int main(int argc, char **argv)
 		read (sockfd, &server_id, sizeof (int));
 	}
 
-	free(ScatteringQueue);
-	free(SpreadingQueue);
+	free (ScatteringQueue);
+	free (SpreadingQueue);
 	close (sockfd);
 
 	return 0;

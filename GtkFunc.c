@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "MyVision.h"
+#include "GtkFunc.h"
 
 extern GtkWidget *dialog, *SearchResult, *image;
 int frame_id = 0, frame_inited = 0, do_searching = 1;
@@ -71,12 +71,12 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 	{
 		if (frame_id == 64) /* a whole frame has been translated */
 		{
-			frame_id = 0;
-			frame_pointer = frame_map;
-
-			pixbuf = gdk_pixbuf_new_from_data ((unsigned char *) frame_pointer, GDK_COLORSPACE_RGB, FALSE,
+			pixbuf = gdk_pixbuf_new_from_data ((unsigned char *) frame_map, GDK_COLORSPACE_RGB, FALSE,
 					8, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * 3, NULL, NULL);
 			gtk_image_set_from_pixbuf (GTK_IMAGE (image), pixbuf);
+
+			frame_id = 0;
+			frame_pointer = frame_map;
 		}
 
 		read (g_io_channel_unix_get_fd (iochannel), frame_pointer, LARGEST_DATAGRAM);

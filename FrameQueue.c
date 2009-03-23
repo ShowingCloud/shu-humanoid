@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "MyVision.h"
+#include "FrameQueue.h"
 
 struct FrameQueue *InitQueue()
 {
