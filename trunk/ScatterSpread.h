@@ -21,8 +21,7 @@
 
 int Index_Coordinate[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Number[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Length;
 
-struct SearchResult
-{
+struct SearchResult {
 	int area;
 	int aver_x;
 	int aver_y;

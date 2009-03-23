@@ -8,6 +8,8 @@
 #ifndef _Bottom_Layer_H_
 #define _Bottom_Layer_H_
 
+#include <netinet/in.h>
+
 #define VIDEO_DEV "/dev/video0"
 #define MOTORS_DEV "/dev/motors"
 
@@ -23,20 +25,28 @@
 #define REMOTE_ADDR "192.168.234.66"
 //#define REMOTE_ADDR "192.168.234.69"
 
-struct motor_step
-{
+#define SOCKET_TCP 1
+#define SOCKET_UDP 2
+
+#define LARGEST_DATAGRAM 1440
+#define DATAGRAM_NUM 640
+
+struct vision_datagram {
+	unsigned char datagram[LARGEST_DATAGRAM];
+	int num;
+};
+
+struct motor_step {
 	unsigned char onestep[MOTOR_NUM];
 };
 
-struct motor_motion
-{
+struct motor_motion {
 	short step_index;
 	short motion_steps;
 	struct motor_step *data;
 };
 
-struct motor_response
-{
+struct motor_response {
 	unsigned short runmode;
 	unsigned short retcode;
 };
@@ -57,6 +67,6 @@ int CloseShared (void *);
 int InitMotors ();
 int SendMotors (int, struct motor_step);
 struct motor_step ReadMotionFile (FILE *);
-int InitSocket (int, char *, int *, char *);
+int InitSocket (int, char *, int *, char *, int, int);
 
 #endif

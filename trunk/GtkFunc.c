@@ -10,7 +10,7 @@
 #include "ColorIdentify.h"
 
 int frame_id = 0, frame_inited = 0, do_searching = 1, gait_inited = 0, pagenum = 1;
-unsigned char *frame_map, *frame_pointer;
+unsigned char *frame_map;
 int gait_sockfd, blocked_sockfd = 0;
 
 gboolean socket_event(GIOChannel* iochannel, GIOCondition condition, gpointer data)
@@ -46,6 +46,9 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 {
 	GdkPixbuf *pixbuf;
 	int client_id = GTK_GUARDER_FRAME_ID;
+	struct vision_datagram vdgram;
+	struct sockaddr_in address;
+	socklen_t len;
 
 	if (!frame_inited) {
 		if (!(frame_map = (unsigned char *) malloc (CAPTURE_WIDTH * CAPTURE_HEIGHT * 3))) {
@@ -53,34 +56,23 @@ gboolean socket_frame_event(GIOChannel* iochannel, GIOCondition condition, gpoin
 			exit(-1);
 		}
 		frame_inited = 1;
-		frame_pointer = frame_map;
 	}
 
 	if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
 		return 0;
 	} else {
-		if (frame_id == 640) { /* a whole frame has been transported */
-			pixbuf = gdk_pixbuf_new_from_data ((unsigned char *) frame_map, GDK_COLORSPACE_RGB, FALSE,
-					8, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * 3, NULL, NULL);
+		recvfrom (g_io_channel_unix_get_fd (iochannel), &vdgram, sizeof (vdgram), 0,
+				(struct sockaddr *) &address, &len);
+		memcpy (vdgram.datagram, frame_map + vdgram.num * LARGEST_DATAGRAM, LARGEST_DATAGRAM);
 
-			if (pagenum == 0)
-				gtk_image_set_from_pixbuf (GTK_IMAGE (image_info), pixbuf);
-			else if (pagenum == 1)
-				gtk_image_set_from_pixbuf (GTK_IMAGE (image_vision), pixbuf);
+		printf ("%d\n", vdgram.num);
+		pixbuf = gdk_pixbuf_new_from_data ((unsigned char *) frame_map, GDK_COLORSPACE_RGB, FALSE,
+				8, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * 3, NULL, NULL);
 
-			frame_id = 0;
-			frame_pointer = frame_map;
-		}
-
-		read (g_io_channel_unix_get_fd (iochannel), frame_pointer, LARGEST_DATAGRAM);
-
-		if (pagenum == 0 || pagenum == 1)
-			write (g_io_channel_unix_get_fd (iochannel), &client_id, sizeof (int));
-		else
-			blocked_sockfd = g_io_channel_unix_get_fd (iochannel);
-
-		frame_pointer += LARGEST_DATAGRAM;
-		frame_id++;
+		if (pagenum == 0)
+			gtk_image_set_from_pixbuf (GTK_IMAGE (image_info), pixbuf);
+		else if (pagenum == 1)
+			gtk_image_set_from_pixbuf (GTK_IMAGE (image_vision), pixbuf);
 
 		return 1;
 	}
@@ -111,7 +103,7 @@ gboolean Adjusted (GtkAdjustment *adjustment, gpointer user_data)
 	}
 
 	if (!gait_inited) {
-		gait_sockfd = InitSocket (GAIT_ADJUST_ID, "Gait Adjustment", &server_id, REMOTE_ADDR);
+		gait_sockfd = InitSocket (GAIT_ADJUST_ID, "Gait Adjustment", &server_id, REMOTE_ADDR, SOCKET_TCP, 0);
 		gait_inited = 1;
 	}
 
