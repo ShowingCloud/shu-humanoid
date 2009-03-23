@@ -3,8 +3,10 @@
 #include <unistd.h>
 
 #include "ScatterSpread.h"
+#include "QueueOper.h"
+#include "Paint.h"
 
-int Scattering(struct FrameQueue *ScatteringQueue)
+int Scattering(struct Queue *ScatteringQueue)
 {
 	int i, j;
 
@@ -16,19 +18,19 @@ int Scattering(struct FrameQueue *ScatteringQueue)
 
 	for (i = 0; i < CAPTURE_HEIGHT; i += SCATTER_INTERVAL_Y)
 		for (j = 0; j < CAPTURE_WIDTH; j += SCATTER_INTERVAL_X)
-			Enqueue(ScatteringQueue, (i * CAPTURE_WIDTH + j));
+			Enqueue(ScatteringQueue, (void *) (i * CAPTURE_WIDTH + j));
 
 	return 1;
 }
 
 
-int SpreadPoints(unsigned char *frame, struct FrameQueue *ScatteringQueue, struct FrameQueue *SpreadingQueue)
+int SpreadPoints(unsigned char *frame, struct Queue *ScatteringQueue, struct Queue *SpreadingQueue)
 {
 	int NextPoint, specified_color, i;
 	struct PointMatched Point_Matched;
 
 	while(QueueLength(ScatteringQueue))
-		if ((NextPoint = Dequeue(ScatteringQueue)) != -1)
+		if ((NextPoint = (int) Dequeue(ScatteringQueue)) != -1)
 		{
 			Point_Matched = PointMatch(frame, NextPoint, -1);
 
@@ -36,7 +38,7 @@ int SpreadPoints(unsigned char *frame, struct FrameQueue *ScatteringQueue, struc
 			{
 				specified_color = Point_Matched.color;
 				ClearQueue(SpreadingQueue);
-				Enqueue(SpreadingQueue, NextPoint);
+				Enqueue(SpreadingQueue, (void *) NextPoint);
 				Spreading(frame, SpreadingQueue, specified_color);
 			}
 		}
@@ -48,13 +50,13 @@ int SpreadPoints(unsigned char *frame, struct FrameQueue *ScatteringQueue, struc
 	return 1;
 }
 
-int Spreading(unsigned char *frame, struct FrameQueue *SpreadingQueue, int specified_color)
+int Spreading(unsigned char *frame, struct Queue *SpreadingQueue, int specified_color)
 {
 	int NextPoint, x, y, aver_x = 0, aver_y = 0, area = 0, weight;
 	struct PointMatched Point_Matched;
 
 	while(QueueLength(SpreadingQueue))
-		if ((NextPoint = Dequeue(SpreadingQueue)) != -1)
+		if ((NextPoint = (int) Dequeue(SpreadingQueue)) != -1)
 		{
 			Point_Matched = PointMatch(frame, NextPoint, specified_color);
 
@@ -73,10 +75,12 @@ int Spreading(unsigned char *frame, struct FrameQueue *SpreadingQueue, int speci
 				Index_Number[Index_Length++] = NextPoint;
 				PrintColor(frame, NextPoint, specified_color);
 
-				if (NextPoint % CAPTURE_WIDTH != CAPTURE_WIDTH - 1) Enqueue(SpreadingQueue, NextPoint + 1);
-				if (NextPoint % CAPTURE_WIDTH) Enqueue(SpreadingQueue, NextPoint - 1);
-				Enqueue(SpreadingQueue, NextPoint + CAPTURE_WIDTH);
-				Enqueue(SpreadingQueue, NextPoint - CAPTURE_WIDTH);
+				if (NextPoint % CAPTURE_WIDTH != CAPTURE_WIDTH - 1)
+					Enqueue(SpreadingQueue, (void *) (NextPoint + 1));
+				if (NextPoint % CAPTURE_WIDTH)
+					Enqueue(SpreadingQueue, (void *) (NextPoint - 1));
+				Enqueue(SpreadingQueue, (void *) (NextPoint + CAPTURE_WIDTH));
+				Enqueue(SpreadingQueue, (void *) (NextPoint - CAPTURE_WIDTH));
 			}
 		}
 

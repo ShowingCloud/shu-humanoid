@@ -10,5 +10,17 @@
 #define _Gtk_Func_H_
 
 #include "Common.h"
+#include "BottomLayer.h"
+#include <gtk/gtk.h>
+
+GtkWidget *dialog, *SearchResult, *GaitInfo, *image, *ScrollLabel[MOTOR_NUM];
+GtkAdjustment *Adjustment[MOTOR_NUM];
+
+gboolean deleted (GtkWidget *, GdkEvent *, gpointer);
+gboolean socket_event (GIOChannel *, GIOCondition, gpointer);
+gboolean socket_frame_event (GIOChannel *, GIOCondition, gpointer);
+gboolean StartStopSearching (GtkWidget *, gpointer);
+gboolean Adjusted (GtkAdjustment *, gpointer);
+gboolean PageChanged (GtkNotebook *, GtkNotebookPage *, guint, gpointer);
 
 #endif

@@ -25,26 +25,28 @@
 #include <sys/ioctl.h>
 
 #include "GtkGuarder.h"
-
-GtkWidget *dialog, *SearchResult, *GaitInfo, *image;
+#include "SocketServer.h"
+#include "BottomLayer.h"
+#include "GtkFunc.h"
 
 int main(int argc, char** argv)
 {
-	GtkWidget *hbox, *vbox1, *vbox2, *ImageFrame, *SearchResultFrame, *GaitInfoFrame, *notebook, *testinfo, *SearchButton;
+	GtkWidget *hbox, *vbox1, *vbox2, *ImageFrame, *SearchResultFrame, *ScrollBar[MOTOR_NUM];
+	GtkWidget *GaitInfoFrame, *notebook, *testinfo, *SearchButton, *AnalyseFrame, *GaitAdjustFrame, *label;
 	GdkPixbuf *pixbuf;
 
 	int sock_fd, sock_frame_fd, result, i, sock_id = GTK_GUARDER_ID, sock_frame_id = GTK_GUARDER_FRAME_ID, server_id;
 	socklen_t len;
 	struct sockaddr_in address;
-	char info[500], append[300];
+	char info[500], append[300], labeltxt[50];
 	GIOChannel *io_channel, *io_frame_channel;
-	
+
 	sock_fd = socket (AF_INET, SOCK_STREAM, 0);
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = inet_addr ("127.0.0.1");
 	address.sin_port = htons (10200);
 	len = sizeof (address);
-	
+
 	if ((result = connect (sock_fd, (struct sockaddr *) &address, len)) == -1)
 	{
 		perror ("oops: GtkGuarder");
@@ -75,7 +77,7 @@ int main(int argc, char** argv)
 	GaitInfoFrame = gtk_frame_new ("Gait Info");
 
 	notebook = gtk_notebook_new ();
-	gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);
+	gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_LEFT);
 
 	g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK (gtk_main_quit), NULL);
 	g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK (gtk_main_quit), NULL);
@@ -119,17 +121,64 @@ int main(int argc, char** argv)
 	g_signal_connect(G_OBJECT (SearchButton), "toggled", G_CALLBACK (StartStopSearching), NULL);
 	gtk_box_pack_start (GTK_BOX (vbox2), SearchButton, FALSE, FALSE, 0);
 
-	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), vbox2, gtk_label_new ("Information"));
+	gtk_container_add (GTK_CONTAINER (hbox), vbox1);
+	gtk_container_add (GTK_CONTAINER (hbox), vbox2);
 
+	label = gtk_label_new ("Information");
+	gtk_label_set_angle ((GtkLabel *) label, 90);
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), hbox, label);
+
+	hbox = gtk_hbox_new (FALSE, 5);
+	vbox1 = gtk_vbox_new (FALSE, 5);
 	vbox2 = gtk_vbox_new (FALSE, 5);
-	testinfo = gtk_label_new ("test information");
-	gtk_box_pack_start (GTK_BOX (vbox2), testinfo, FALSE, FALSE, 0);
-	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), vbox2, gtk_label_new ("test"));
+
+	ImageFrame = gtk_frame_new ("Image");
+	AnalyseFrame = gtk_frame_new ("Vision Analyse");
+
+	image = gtk_image_new_from_pixbuf (pixbuf);
+	gtk_container_add (GTK_CONTAINER (ImageFrame), image);
+	gtk_box_pack_start (GTK_BOX (vbox1), ImageFrame, FALSE, FALSE, 0);
+
+	testinfo = gtk_label_new ("Vision Analyse");
+	gtk_container_add (GTK_CONTAINER (AnalyseFrame), testinfo);
+	gtk_box_pack_start (GTK_BOX (vbox2), AnalyseFrame, FALSE, FALSE, 0);
 
 	gtk_container_add (GTK_CONTAINER (hbox), vbox1);
-	gtk_container_add (GTK_CONTAINER (hbox), notebook);
+	gtk_container_add (GTK_CONTAINER (hbox), vbox2);
 
-	gtk_container_add(GTK_CONTAINER(dialog), hbox);
+	label = gtk_label_new ("Vision");
+	gtk_label_set_angle ((GtkLabel *) label, 90);
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), hbox, label);
+
+	hbox = gtk_hbox_new (FALSE, 5);
+	vbox1 = gtk_vbox_new (FALSE, 5);
+	vbox2 = gtk_vbox_new (FALSE, 5);
+
+	GaitAdjustFrame = gtk_frame_new ("Gait Adjustment");
+
+	for (i = 0; i < MOTOR_NUM; i++)
+	{
+		Adjustment[i] = (GtkAdjustment *) gtk_adjustment_new (step_init.onestep[i], 0, 180, 1, 0, 0);
+		g_signal_connect (G_OBJECT (Adjustment[i]), "value_changed", G_CALLBACK (Adjusted), NULL);
+		ScrollBar[i] = gtk_hscrollbar_new (Adjustment[i]);
+
+		sprintf (labeltxt, "Motor %d: %d", i, (int) gtk_adjustment_get_value (Adjustment[i]));
+		ScrollLabel[i] = gtk_label_new (labeltxt);
+		gtk_box_pack_start (GTK_BOX ((i % 2) ? vbox2 : vbox1), ScrollLabel[i], FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX ((i % 2) ? vbox2 : vbox1), ScrollBar[i], FALSE, FALSE, 0);
+	}
+
+	gtk_container_add (GTK_CONTAINER (hbox), vbox1);
+	gtk_container_add (GTK_CONTAINER (hbox), vbox2);
+
+	gtk_container_add (GTK_CONTAINER (GaitAdjustFrame), hbox);
+
+	label = gtk_label_new ("Gait");
+	gtk_label_set_angle ((GtkLabel *) label, 90);
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), GaitAdjustFrame, label);
+
+	g_signal_connect (G_OBJECT (notebook), "switch-page", G_CALLBACK (PageChanged), NULL);
+	gtk_container_add(GTK_CONTAINER(dialog), notebook);
 
 	io_channel = g_io_channel_unix_new (sock_fd);
 	g_io_channel_set_encoding (io_channel, NULL, NULL);

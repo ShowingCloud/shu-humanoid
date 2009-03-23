@@ -19,6 +19,8 @@
 #include <arpa/inet.h>
 
 #include "ConsoleGuarder.h"
+#include "SocketServer.h"
+#include "Visiond.h"
 
 int main(int argc, char** argv)
 {

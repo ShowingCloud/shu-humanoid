@@ -5,7 +5,7 @@ CP		= cp
 PMOUNT		= pmount
 PUMOUNT		= pumount
 
-obj_Visiond	= Visiond.o FrameQueue.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
+obj_Visiond	= Visiond.o QueueOper.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o
 #obj_Gtk		= GtkGuarder.o GtkFunc.o
 obj_Socket	= SocketServer.o BottomLayer.o

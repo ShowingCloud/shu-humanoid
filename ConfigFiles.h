@@ -16,6 +16,7 @@
 #define V_OVERMEASURE 0
 
 #include "Common.h"
+#include "ColorIdentify.h"
 
 struct HSVColors
 {
@@ -36,5 +37,8 @@ struct ColorIdentifier
 	int upper_limit_V;
 	int lower_limit_V;
 } identifier[COLOR_TYPES];
+
+int RecordColor(FILE *, struct HSVColors);
+int ReadColor();
 
 #endif

@@ -2,17 +2,19 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "GtkFunc.h"
+#include "BottomLayer.h"
+#include "SocketServer.h"
+#include "Visiond.h"
 
-extern GtkWidget *dialog, *SearchResult, *image;
-int frame_id = 0, frame_inited = 0, do_searching = 1;
+int frame_id = 0, frame_inited = 0, do_searching = 1, gait_inited = 0;
 unsigned char *frame_map, *frame_pointer;
-
-gboolean deleted(GtkWidget *widget, GdkEvent *event, gpointer data)
-{
-	return 1;
-}
+int gait_sockfd, gait_mutex = 0;
 
 gboolean socket_event(GIOChannel* iochannel, GIOCondition condition, gpointer data)
 {
@@ -101,4 +103,85 @@ gboolean StartStopSearching (GtkWidget *widget, gpointer data)
 		do_searching = 0;
 		return 1;
 	}
+}
+
+gboolean Adjusted (GtkAdjustment *adjustment, gpointer user_data)
+{
+	int i, onestep, server_id;
+	char labeltxt[50];
+	struct motor_step step;
+
+	for (i = 0; i < MOTOR_NUM; i++)
+	{
+		onestep = (int) gtk_adjustment_get_value (Adjustment[i]);
+		sprintf (labeltxt, "Motor %d: %d", i, onestep);
+		gtk_label_set_text ((GtkLabel *) ScrollLabel[i], labeltxt);
+		step.onestep[i] = onestep;
+	}
+
+	if (!gait_inited)
+	{
+		int result, sock_id = GAIT_ADJUST_ID;
+		socklen_t len;
+		struct sockaddr_in address;
+
+		gait_sockfd = socket (AF_INET, SOCK_STREAM, 0);
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = inet_addr ("127.0.0.1");
+		address.sin_port = htons (10200);
+		len = sizeof (address);
+
+		if ((result = connect (gait_sockfd, (struct sockaddr *) &address, len)) == -1)
+		{
+			perror ("oops: Gait Adjustment");
+			exit(-1);
+		}
+	
+		write (gait_sockfd, &sock_id, sizeof (int));
+		read (gait_sockfd, &server_id, sizeof (int));
+		if ((server_id & ID_MASK) != SOCKET_LISTENER_ID)
+		{
+			printf ("Error: unknown socket server!\n");
+			exit(-1);
+		}
+		else
+			printf ("Connected with the socket server! (gait adjust)\n");
+
+		gait_inited = 1;
+	}
+
+	while (gait_mutex);
+	gait_mutex = 1;
+	write (gait_sockfd, &step, sizeof (struct motor_step));
+	read (gait_sockfd, &server_id, sizeof (int));
+	gait_mutex = 0;
+
+	return 1;
+}
+
+gboolean PageChanged (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data)
+{
+	switch (page_num)
+	{
+		case 1:
+			if (gait_inited)
+			{
+				close (gait_sockfd);
+				gait_inited = 0;
+			}
+			break;
+		case 2:
+			if (gait_inited)
+			{
+				close (gait_sockfd);
+				gait_inited = 0;
+			}
+			break;
+		case 3:
+			break;
+		default:
+			break;
+	}
+
+	return 1;
 }

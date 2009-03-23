@@ -3,6 +3,9 @@
 #include <unistd.h>
 
 #include "ColorIdentify.h"
+#include "BottomLayer.h"
+#include "ScatterSpread.h"
+#include "ConfigFiles.h"
 
 struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 {

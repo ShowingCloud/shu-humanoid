@@ -14,6 +14,8 @@
 #include <netinet/in.h>
 
 #include "SocketServer.h"
+#include "BottomLayer.h"
+#include "Visiond.h"
 
 int has_video_info = 0, shared_inited = 0, frame_id = 64, frame_ready = 0;
 struct VideoInfo video_info;
@@ -21,7 +23,7 @@ int client_index[SOCKET_IDS][10], client_nums[SOCKET_IDS];
 int listener_status = SOCKET_LISTENER_ID | DO_SEARCHING;
 unsigned char *frame_map, *frame_pointer;
 struct motor_step step_now, step_last;
-int updown = 0;
+int updown = 0, gait_adjust = 0;
 
 int main(int argc, char **argv)
 {
@@ -170,6 +172,9 @@ int ServeBreakClient (int fd, int client_id, int ServeBreak)
 			case MOTORD_ID:
 				ServeMotord (fd);
 				break;
+			case GAIT_ADJUST_ID:
+				ServeGaitAdjust (fd);
+				break;
 			default:
 				break;
 		}
@@ -192,6 +197,9 @@ int ServeBreakClient (int fd, int client_id, int ServeBreak)
 				break;
 			case MOTORD_ID:
 				BreakMotord (fd);
+				break;
+			case GAIT_ADJUST_ID:
+				BreakGaitAdjust (fd);
 				break;
 			default:
 				break;
@@ -359,19 +367,22 @@ int ServeMotord (int fd)
 	printf ("Serving Motord.\n");
 #endif
 
-	if (step_now.onestep[0] < 110 && step_now.onestep[0] > 60)
-		if (updown)
-			step_now.onestep[0]++;
-		else
-			step_now.onestep[0]--;
-	else
+	if (!gait_adjust)
 	{
-		updown ^= 1;
-
-		if (updown)
-			step_now.onestep[0]++;
+		if (step_now.onestep[0] < 110 && step_now.onestep[0] > 60)
+			if (updown)
+				step_now.onestep[0]++;
+			else
+				step_now.onestep[0]--;
 		else
-			step_now.onestep[0]--;
+		{
+			updown ^= 1;
+	
+			if (updown)
+				step_now.onestep[0] = 61;
+			else
+				step_now.onestep[0] = 109;
+		}
 	}
 
 
@@ -388,6 +399,32 @@ int BreakMotord (int fd)
 #ifdef VERBOSE
 	printf ("Stopping Motord.\n");
 #endif
+
+	return 1;
+}
+
+int ServeGaitAdjust (int fd)
+{
+#ifdef VERBOSE
+	printf ("Serving Gait Adjust.\n");
+#endif
+	gait_adjust = 1;
+
+	step_last = step_now;
+
+	read (fd, &step_now, sizeof (struct motor_step));
+	write (fd, &listener_status, sizeof (int));
+
+	return 1;
+}
+
+int BreakGaitAdjust (int fd)
+{
+#ifdef VERBOSE
+	printf ("Stopping Gait Adjust.\n");
+#endif
+
+	gait_adjust = 0;
 
 	return 1;
 }

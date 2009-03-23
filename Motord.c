@@ -9,11 +9,12 @@
 #include <arpa/inet.h>
 
 #include "Motord.h"
+#include "BottomLayer.h"
+#include "SocketServer.h"
 
 int main (int argc, char **argv)
 {
 	int ret, motors, i;
-	struct timeval time_n, time_l;
 	struct motor_step step_now;
 
 	int sockfd, sockresult, sock_id = MOTORD_ID, server_id;
@@ -55,21 +56,15 @@ int main (int argc, char **argv)
 	ret = SendMotors (motors, step_now);
 #endif
 
-	gettimeofday (&time_l, 0);
-
 	while (1)
 	{
 		write (sockfd, &sock_id, sizeof (int));
 		read (sockfd, &step_now, sizeof (struct motor_step));
 
-		do
-			gettimeofday (&time_n, 0);
-		while (((time_n.tv_sec - time_l.tv_sec) * 1000 + (time_n.tv_usec - time_l.tv_usec) / 1000) < 20);
-
-		time_l = time_n;
-
 #ifdef HAS_MOTORS
 		ret = SendMotors (motors, step_now);
+#else
+		usleep (20000);
 #endif
 
 #ifdef VERBOSE

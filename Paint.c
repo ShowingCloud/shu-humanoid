@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "Paint.h"
+#include "BottomLayer.h"
 
 int PrintColor(unsigned char *frame, int c, int color)
 {
