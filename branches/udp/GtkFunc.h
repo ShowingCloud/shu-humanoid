@@ -10,19 +10,28 @@
 
 #include "Common.h"
 #include "BottomLayer.h"
+#include "ConfigFiles.h"
 #include <gtk/gtk.h>
+#include <fcntl.h>
 
-GtkWidget *dialog, *SearchResult, *GaitInfo, *image_info, *image_vision, *ScrollLabel[MOTOR_NUM];
-GtkWidget *point_info, *SearchButton;
+GtkWidget *dialog, *SearchResult, *GaitInfo, *image_info, *image_vision, *ScrollLabel[MOTOR_NUM], *StepInfo;
+GtkTextBuffer *text_buffer;
 GtkAdjustment *Adjustment[MOTOR_NUM];
+struct motor_step step_new;
 
-gboolean deleted (GtkWidget *, GdkEvent *, gpointer);
-gboolean socket_event (GIOChannel *, GIOCondition, gpointer);
-gboolean socket_frame_event (GIOChannel *, GIOCondition, gpointer);
-gboolean StartStopSearching (GtkWidget *, gpointer);
-gboolean Adjusted (GtkAdjustment *, gpointer);
-gboolean PageChanged (GtkNotebook *, GtkNotebookPage *, guint, gpointer);
-gboolean motion_notify (GtkWidget *, GdkEventButton *, gpointer);
-gboolean button_press (GtkWidget *, GdkEventButton *, gpointer);
+gboolean deleted (GtkWidget *, GdkEvent *);
+gboolean socket_event (GIOChannel *, GIOCondition);
+gboolean socket_frame_event (GIOChannel *, GIOCondition);
+gboolean StartStopSearching (GtkWidget *);
+gboolean Adjusted (void);
+gboolean PageChanged (guint);
+gboolean SetInitStep (void);
+gboolean Reset (void);
+gboolean EmergentReset (GtkButton *);
+gboolean LinearInterpolation (void);
+gboolean AllLinearInterpolation (void);
+gboolean InsertStep (void);
+gboolean RemoveStep (void);
+gboolean ClearStep (void);
 
 #endif

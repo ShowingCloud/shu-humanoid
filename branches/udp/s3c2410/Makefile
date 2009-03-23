@@ -1,21 +1,21 @@
 CC		= arm-linux-gnu-gcc
-CFLAGS		= -I. -g -Wall -Wextra -DHAS_MOTORS -mtune=arm920t -march=armv4t -DVERBOSE
-LDFLAGS		=
-CP		= scp
-#PMOUNT		= pmount
-#PUMOUNT	= pumount
+CFLAGS		= -I. -O2 -Wall -Wextra -DHAS_MOTORS -mtune=arm920t -march=armv4t
+#LDFLAGS		= -static
+CP		= cp
+PMOUNT		= pmount
+PUMOUNT		= pumount
 
 obj_Visiond	= Visiond.o QueueOper.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o
 obj_Console	= ConsoleGuarder.o BottomLayer.o
-#obj_Gtk	= GtkGuarder.o GtkFunc.o ColorIdentify.o
+#obj_Gtk	= GtkGuarder.o GtkFunc.o
 obj_Socket	= SocketServer.o BottomLayer.o
 obj_Motord	= Motord.o BottomLayer.o
 
 Projs		= Visiond ConsoleGuarder SocketServer Motord
 Confs		= .colorsrc
-#dest_disk	= sdb1
-#dest_dev	= /dev/$(dest_disk)
-dest_dir	= 192.168.234.69:~/Programs
+dest_disk	= sdb1
+dest_dev	= /dev/$(dest_disk)
+dest_dir	= /media/$(dest_disk)/prog/
 
 all: $(Projs)
 
@@ -38,7 +38,9 @@ Motord: $(obj_Motord) Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(obj_Motord)
 
 install:
-	$(CP) $(Projs) $(Confs) $(dest_dir)
+	$(PMOUNT) $(dest_dev)
+	$(CP) -f $(Projs) $(Confs) $(dest_dir)
+	$(PUMOUNT) $(dest_dev)
 
 clean:
 	rm -f $(obj_Visiond) $(obj_Console) $(obj_Gtk) $(obj_Socket) $(obj_Motord) $(Projs)

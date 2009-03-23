@@ -9,10 +9,10 @@ int RecordColor(FILE *fp, struct HSVColors colors)
 	/*
 	 * Save the HSV values of one color to the file.
 	 * The file will look like this:
-	 * 0,2,red
+	 * 0,red
 	 * xxx,xxx,xxx
 	 * xxx,xxx,xxx
-	 * 2,1,blue
+	 * 2,blue
 	 * xxx,xxx,xxx
 	 * ...
 	 */
@@ -33,10 +33,10 @@ int ReadColor()
 	/*
 	 * Save the HSV values of one color to the file.
 	 * The file will look like this:
-	 * 1,2,red
+	 * 1,red
 	 * xxx,xxx,xxx
 	 * xxx,xxx,xxx
-	 * 3,1,blue
+	 * 3,blue
 	 * xxx,xxx,xxx
 	 * ...
 	 */
@@ -48,49 +48,41 @@ int ReadColor()
 	char colorname[10];
 	struct HSVColors colors[COLOR_TYPES];
 
-	if ((fp = fopen(COLOR_FILE, "r")) == NULL)
-	{
-		fprintf(stderr, "Cannot open file...\n");
+	if ((fp = fopen(COLOR_FILE, "r")) == NULL) {
+		perror ("Open color file");
 		return -1;
 	}
 
-	for (i = 0; i < COLOR_TYPES; i++)
-	{
+	for (i = 0; i < COLOR_TYPES; i++) {
 		colors[i].name = i;
 		colors[i].num = 0;
 	}
 
-	while (!feof(fp))
-	{
+	while (!feof(fp)) {
 		fscanf(fp, "%d,%d,%s\n", &name, &num, colorname);
 
-		if ((colors[name].num + num) <= MAX_POINTS_PER_COLOR)
-		{
+		if ((colors[name].num + num) <= MAX_POINTS_PER_COLOR) {
 			colors[name].num += num;
 			for(i = colors[name].num - num; i < colors[name].num; i++)
 				fscanf(fp, "%d,%d,%d\n", &colors[name].HSVColor[i].H,
 						&colors[name].HSVColor[i].S, &colors[name].HSVColor[i].V);
-		}
-		else
+		} else
 			for(i = colors[name].num - num; i < colors[name].num; i++);
 	}
 
 	fclose(fp);
 	
-	for (i = 0; i < COLOR_TYPES; i++)
-	{
+	for (i = 0; i < COLOR_TYPES; i++) {
 		aver_H_pre = 0; aver_H = 0; upper_limit_H = 0; lower_limit_H = 360;
 		aver_S = 0; upper_limit_S = 0; lower_limit_S = 255;
 		aver_V = 0; upper_limit_V = 0; lower_limit_V = 255;
-		if (colors[i].num != 0)
-		{
+		if (colors[i].num != 0) {
 
 			for (j = 0; j < colors[i].num; j++)
 				aver_H_pre += colors[i].HSVColor[j].H;
 			aver_H_pre /= colors[i].num;
 
-			for (j = 0; j < colors[i].num; j++)
-			{
+			for (j = 0; j < colors[i].num; j++) {
 				if ((colors[i].HSVColor[j].H - aver_H_pre) > 180) colors[i].HSVColor[j].H -= 360;
 				else if ((aver_H_pre - colors[i].HSVColor[j].H) > 180) colors[i].HSVColor[j].H += 360;
 				aver_H += colors[i].HSVColor[j].H;
@@ -106,9 +98,7 @@ int ReadColor()
 			aver_H /= colors[i].num;
 			aver_S /= colors[i].num;
 			aver_V /= colors[i].num;
-		}
-		else
-		{
+		} else {
 			aver_H = -500;
 			aver_S = -500;
 			aver_V = -500;
@@ -145,3 +135,37 @@ int ReadColor()
 	return 1;
 }
 
+int RecordInitStep (struct motor_step initstep)
+{
+	FILE *fp;
+	int i;
+
+	if ((fp = fopen (STEP_INIT_FILE, "w")) == NULL) {
+		perror ("Open init step file");
+		return -1;
+	}
+
+	for (i = 0; i < MOTOR_NUM; i++)
+		fprintf (fp, "%d,", initstep.onestep[i]);
+
+	fclose (fp);
+	return 0;
+}
+
+struct motor_step ReadInitStep ()
+{
+	FILE *fp;
+	int i;
+	struct motor_step init = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+
+	if ((fp = fopen (STEP_INIT_FILE, "r")) == NULL) {
+		perror ("Open init step file");
+		return init;
+	}
+
+	for (i = 0; i < MOTOR_NUM; i++)
+		fscanf (fp, "%d,", (int *)& init.onestep[i]);
+
+	fclose (fp);
+	return init;
+}

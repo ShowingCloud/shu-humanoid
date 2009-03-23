@@ -8,24 +8,23 @@
 #include "BottomLayer.h"
 #include "SocketServer.h"
 
-int main (int argc, char **argv)
+int main (void)
 {
-	int ret, motors, i;
+	int ret, i;
 	struct motor_step step_now;
 
 	int sockfd, server_id, sock_id = MOTORD_ID;
 
 #ifdef HAS_MOTORS
-	if ((motors = InitMotors ()) < 0)
+	if (unlikely((motors = InitMotors ()) < 0))
 	{
 		perror ("oops: Motord");
 		exit (-1);
 	}
 #endif
 
-	sockfd = InitSocket (sock_id, "Motord", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
+	sockfd = InitSocket (sock_id, "Motord", &server_id, REMOTE_ADDR);
 
-	step_now = step_init;
 #ifdef HAS_MOTORS
 	ret = SendMotors (motors, step_now);
 #endif
@@ -36,7 +35,13 @@ int main (int argc, char **argv)
 		read (sockfd, &step_now, sizeof (struct motor_step));
 
 #ifdef HAS_MOTORS
-		ret = SendMotors (motors, step_now);
+		if (unlikely(ret = SendMotors (motors, step_now))) {
+#ifdef VERBOSE
+			printf ("An error occured when sending data to motors. Delaying to recover...\n");
+#endif
+			usleep (20000);
+		}
+		usleep (10000);
 #else
 		usleep (20000);
 #endif

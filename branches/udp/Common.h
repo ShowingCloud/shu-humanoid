@@ -8,6 +8,9 @@
 #ifndef _Common_H_
 #define _Common_H_
 
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x)  __builtin_expect(!!(x), 0)
+
 #define MAX_POINTS_PER_COLOR 20
 
 #define COLOR_TYPES 4

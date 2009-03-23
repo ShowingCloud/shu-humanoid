@@ -10,7 +10,8 @@
 
 #include "Common.h"
 
-struct Queue {
+struct Queue
+{
 	int type;
 	void **item;
 	int head;

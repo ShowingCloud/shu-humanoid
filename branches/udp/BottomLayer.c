@@ -31,35 +31,36 @@ int InitVideo ()
 	struct video_window win;
 	struct video_picture pic;
 
-	if ((file = open (VIDEO_DEV, O_RDWR)) < 0) {
+	if (unlikely((file = open(VIDEO_DEV, O_RDWR)) < 0)) {
 		perror(VIDEO_DEV);
 		return file;
 	}
 
-	if (ioctl (file, VIDIOCGCAP, &cap) < 0) {
+	if (unlikely(ioctl(file, VIDIOCGCAP, &cap) < 0)) {
 		perror("VIDIOGCAP");
 		fprintf(stderr, "(" VIDEO_DEV " not a video4linux device?)\n");
 		return -1;
 	}
 
-	if (ioctl (file, VIDIOCGWIN, &win) < 0) {
+	if (unlikely(ioctl(file, VIDIOCGWIN, &win)) < 0) {
 		perror("VIDIOCGWIN");
 		return -1;
 	}
 	win.width = CAPTURE_WIDTH;
 	win.height = CAPTURE_HEIGHT;
-	if (ioctl (file, VIDIOCSWIN, &win) < 0) {
+	if (unlikely(ioctl(file, VIDIOCSWIN, &win)) < 0) {
 		perror("VIDIOCSWIN");
 		return -1;
 	}
 
-	if (ioctl (file, VIDIOCGPICT, &pic) < 0) {
+	if (unlikely(ioctl(file, VIDIOCGPICT, &pic)) < 0) {
 		perror("VIDIOCGPICT");
 		return -1;
 	}
 	pic.depth = CAPTURE_BPP;
 	pic.palette = VIDEO_PALETTE_RGB24;
-	if (ioctl (file, VIDIOCSPICT, &pic) < 0) {
+	pic.brightness = 20000;
+	if (unlikely(ioctl(file, VIDIOCSPICT, &pic)) < 0) {
 		perror("VIDIOCSPICT");
 		return -1;
 	}
@@ -68,23 +69,23 @@ int InitVideo ()
 	map.width = CAPTURE_WIDTH;
 	map.height = CAPTURE_HEIGHT;
 	map.format = VIDEO_PALETTE_RGB24;
-	if (ioctl (file, VIDIOCMCAPTURE, &map) < 0) {
+	if (unlikely(ioctl(file, VIDIOCMCAPTURE, &map)) < 0) {
 		perror ("VIDIOCMCAPTURE");
 		return -1;
 	}
 
-	if (ioctl (file, VIDIOCGMBUF, &mbuf) < 0) {
+	if (unlikely(ioctl(file, VIDIOCGMBUF, &mbuf)) < 0) {
 		perror ("VIDIOCGMBUF");
 		return -1;
 	}
 
-	if ((frame = (unsigned char *) mmap (0, mbuf.size,
-					PROT_READ | PROT_WRITE, MAP_SHARED, file, 0)) < (unsigned char *) 0) {
+	if (unlikely((frame = (unsigned char *) mmap (0, mbuf.size,
+					PROT_READ | PROT_WRITE, MAP_SHARED, file, 0)) < (unsigned char *) 0)) {
 		fprintf (stderr, "Can't open memory map.\n");
 		return -1;
 	}
 
-	while (ioctl (file, VIDIOCSYNC, &nextframe) < 0)
+	while (unlikely(ioctl(file, VIDIOCSYNC, &nextframe) < 0))
 		usleep (1000);
 
 	return file;
@@ -94,13 +95,13 @@ int RetrieveFrame (int video)
 {
 	nextframe ^= 1;
 
-	if (ioctl (video, VIDIOCSYNC, &nextframe) < 0) {
+	if (unlikely(ioctl(video, VIDIOCSYNC, &nextframe) < 0)) {
 		perror ("VIDIOCSYNC");
 		return -1;
 	}
 
 	if (nextframe) {
-		if (ioctl (video, VIDIOCMCAPTURE, &map) < 0) {
+		if (unlikely(ioctl(video, VIDIOCMCAPTURE, &map) < 0)) {
 			perror ("VIDIOCMCAPTURE");
 			return -1;
 		}
@@ -123,6 +124,9 @@ void *InitShared (char *tempfile)
 
 	if (tempfile)
 		shared_fd = open (tempfile, O_CREAT|O_RDWR|O_TRUNC , 00777);
+	else
+		return NULL;
+
 	printf ("Share file %s opened.\n", tempfile);
 
 	lseek (shared_fd, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3 - 1, SEEK_SET);
@@ -158,7 +162,7 @@ int InitMotors ()
 {
 	int file;
 
-	if ((file = open (MOTORS_DEV, O_RDWR)) < 0) {
+	if (unlikely((file = open (MOTORS_DEV, O_RDWR)) < 0)) {
 		perror (MOTORS_DEV);
 		return -1;
 	}
@@ -166,18 +170,23 @@ int InitMotors ()
 	return file;
 }
 
-int SendMotors (int file, struct motor_step step)
+__inline__ int SendMotors (int file, struct motor_step step)
 {
 	struct motor_response ret;
 
-	if (ioctl (file, RM_EXEC_STEP, &step) < 0) {
+	if (unlikely(ioctl(file, RM_EXEC_STEP, &step) < 0)) {
 		perror ("RM_EXEC_STEP");
 		return -1;
 	}
 
-	do
+	read (file, &ret, sizeof (struct motor_response));
+	while (unlikely(ret.runmode != RM_EXEC_STEP)) {
+#ifdef VERBOSE
+		printf ("Return value of motor device isn't correct. Delay and try again.\n");
+#endif
+		usleep (20000);
 		read (file, &ret, sizeof (struct motor_response));
-	while (ret.runmode != RM_EXEC_STEP);
+	}
 
 	return ret.retcode;
 }
@@ -196,44 +205,26 @@ struct motor_step ReadMotionFile (FILE *file)
 	return ret;
 }
 
-int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20], int connection, int server)
+int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20])
 {
-	int result;
-	int sockfd;
-	struct sockaddr_in address;
+	int sockfd, result;
 	socklen_t len;
+	struct sockaddr_in address;
 
-	if (connection == SOCKET_TCP)
-		sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	else if (connection == SOCKET_UDP)
-		sockfd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	else {
-		printf ("Connection type %d not supported!\n", connection);
-		exit (-1);
-	}
-
+	sockfd = socket (AF_INET, SOCK_STREAM, 0);
 	address.sin_family = AF_INET;
-	if (server)
-		address.sin_addr.s_addr = htonl (INADDR_ANY);
-	else
-		address.sin_addr.s_addr = inet_addr (addr);
+	address.sin_addr.s_addr = inet_addr (addr);
 	address.sin_port = htons (10200);
 	len = sizeof (address);
 
-	if (server) {
-		bind (sockfd, (struct sockaddr *) &address, len);
-		listen (sockfd, 5);
-		return sockfd;
-	}
-
-	if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1) {
+	if (unlikely((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1)) {
 		perror (sock_name);
 		exit (-1);
 	}
 
 	write (sockfd, &sock_id, sizeof (int));
 	read (sockfd, server_id, sizeof (int));
-	if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID) {
+	if (unlikely((*server_id & ID_MASK) != SOCKET_LISTENER_ID)) {
 		printf ("Error: unknown socket server!\n");
 		exit (-1);
 	} else {

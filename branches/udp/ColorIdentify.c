@@ -65,7 +65,7 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 	return ret;
 }
 
-struct HSVColor RGB2HSV (int R, int G, int B)
+struct HSVColor RGB2HSV(int R, int G, int B)
 {
 	/*
 	 * Convert RGB color to HSV.
@@ -76,11 +76,11 @@ struct HSVColor RGB2HSV (int R, int G, int B)
 
 	if (R > G)
 	{
-		if (B > R) /* max = B; min = G; B != 0; B != R; */
+		if (B > R) /* max = B; min = R; B != 0; B != R; */
 		{
 			V = B;
-			S = (B - G) * 255 / B;
-			H = 240 + (R - G) * 60 / (B - G);
+			S = (B - R) * 255 / B;
+			H = 240 + (R - G) * 60 / (B - R);
 			struct HSVColor ret = {H, S, V};
 			return ret;
 		}

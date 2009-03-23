@@ -1,0 +1,69 @@
+%.o	Makefile	/^%.o: %.c %.h Common.h Makefile$/
+Adjusted	GtkFunc.c	/^gboolean Adjusted (void)$/
+AllLinearInterpolation	GtkFunc.c	/^gboolean AllLinearInterpolation (void)$/
+BreakConsoleGuarder	SocketServer.c	/^int BreakConsoleGuarder (int fd)$/
+BreakGaitAdjust	SocketServer.c	/^int BreakGaitAdjust (int fd)$/
+BreakGtkGuarder	SocketServer.c	/^int BreakGtkGuarder (int fd)$/
+BreakGtkGuarderFrame	SocketServer.c	/^int BreakGtkGuarderFrame (int fd)$/
+BreakMotord	SocketServer.c	/^int BreakMotord (int fd)$/
+BreakVisiond	SocketServer.c	/^int BreakVisiond (int fd)$/
+ClearQueue	QueueOper.c	/^int ClearQueue (struct Queue *queue)$/
+ClearStep	GtkFunc.c	/^gboolean ClearStep (void)$/
+CloseShared	BottomLayer.c	/^int CloseShared (void *map)$/
+Closevideo	BottomLayer.c	/^int Closevideo (int video)$/
+ConsoleGuarder	Makefile	/^ConsoleGuarder: $(obj_Console)$/
+Dequeue	QueueOper.c	/^void *Dequeue (struct Queue *queue)$/
+DrawBigPoint	Paint.c	/^int DrawBigPoint(unsigned char *frame, int Center,/
+EmergentReset	GtkFunc.c	/^gboolean EmergentReset (GtkButton *button)$/
+Enqueue	QueueOper.c	/^int Enqueue (struct Queue *queue, void *item)$/
+FreeQueue	QueueOper.c	/^int FreeQueue (struct Queue *queue)$/
+GtkGuarder	Makefile	/^GtkGuarder: $(obj_Gtk)$/
+InitMotors	BottomLayer.c	/^int InitMotors ()$/
+InitQueue	QueueOper.c	/^struct Queue *InitQueue (size_t size, int quantity/
+InitShared	BottomLayer.c	/^void *InitShared (char *tempfile)$/
+InitSocket	BottomLayer.c	/^int InitSocket (int sock_id, char sock_name[20], i/
+InitVideo	BottomLayer.c	/^int InitVideo ()$/
+InsertStep	GtkFunc.c	/^gboolean InsertStep (void)$/
+LinearInterpolation	GtkFunc.c	/^gboolean LinearInterpolation (void)$/
+MConsoleGuarder	ConsoleGuarder.c	/^int main (void)$/
+MGtkGuarder	GtkGuarder.c	/^int main(int argc, char** argv)$/
+MMotord	Motord.c	/^int main (void)$/
+MSocketServer	SocketServer.c	/^int main(int argc, char **argv)$/
+MVisiond	Visiond.c	/^int main (void)$/
+Motord	Makefile	/^Motord: $(obj_Motord)$/
+OpenShared	BottomLayer.c	/^void *OpenShared (char *tempfile)$/
+PageChanged	GtkFunc.c	/^gboolean PageChanged (guint page_num)$/
+PointMatch	ColorIdentify.c	/^struct PointMatched PointMatch(unsigned char *fram/
+PrintColor	Paint.c	/^int PrintColor(unsigned char *frame, int c, int co/
+QueueLength	QueueOper.c	/^int QueueLength (struct Queue *queue)$/
+RGB2HSV	ColorIdentify.c	/^struct HSVColor RGB2HSV(int R, int G, int B)$/
+ReadColor	ConfigFiles.c	/^int ReadColor()$/
+ReadInitStep	ConfigFiles.c	/^struct motor_step ReadInitStep ()$/
+ReadMotionFile	BottomLayer.c	/^struct motor_step ReadMotionFile (FILE *file)$/
+RecordColor	ConfigFiles.c	/^int RecordColor(FILE *fp, struct HSVColors colors)/
+RecordInitStep	ConfigFiles.c	/^int RecordInitStep (struct motor_step initstep)$/
+RemoveStep	GtkFunc.c	/^gboolean RemoveStep (void)$/
+Reset	GtkFunc.c	/^gboolean Reset (void)$/
+RetrieveFrame	BottomLayer.c	/^int RetrieveFrame (int video)$/
+Scattering	ScatterSpread.c	/^int Scattering(struct Queue *ScatteringQueue)$/
+SearchForColor	Visiond.c	/^int SearchForColor (unsigned char *frame, struct Q/
+SelectClient	SocketServer.c	/^int SelectClient (int fd)$/
+SendMotors	BottomLayer.c	/^__inline__ int SendMotors (int file, struct motor_/
+ServeConsoleGuarder	SocketServer.c	/^__inline__ int ServeConsoleGuarder (int fd)$/
+ServeGaitAdjust	SocketServer.c	/^__inline__ int ServeGaitAdjust (int fd)$/
+ServeGtkGuarder	SocketServer.c	/^__inline__ int ServeGtkGuarder (int fd)$/
+ServeGtkGuarderFrame	SocketServer.c	/^__inline__ int ServeGtkGuarderFrame (int fd)$/
+ServeMotord	SocketServer.c	/^__inline__ int ServeMotord (int fd)$/
+ServeVisiond	SocketServer.c	/^__inline__ int ServeVisiond (int fd)$/
+SetInitStep	GtkFunc.c	/^gboolean SetInitStep (void)$/
+SocketServer	Makefile	/^SocketServer: $(obj_Socket)$/
+SpreadPoints	ScatterSpread.c	/^int SpreadPoints(unsigned char *frame, struct Queu/
+Spreading	ScatterSpread.c	/^int Spreading(unsigned char *frame, struct Queue */
+StartStopSearching	GtkFunc.c	/^gboolean StartStopSearching (GtkWidget *widget)$/
+Visiond	Makefile	/^Visiond: $(obj_Visiond)$/
+all	Makefile	/^all: Visiond ConsoleGuarder GtkGuarder SocketServe/
+clean	Makefile	/^clean:$/
+likely	Common.h	/^#define likely(x) __builtin_expect(!!(x), 1)$/
+socket_event	GtkFunc.c	/^gboolean socket_event(GIOChannel* iochannel, GIOCo/
+socket_frame_event	GtkFunc.c	/^gboolean socket_frame_event(GIOChannel* iochannel,/
+unlikely	Common.h	/^#define unlikely(x)  __builtin_expect(!!(x), 0)$/
