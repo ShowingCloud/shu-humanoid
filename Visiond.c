@@ -14,13 +14,10 @@
 
 #include "Visiond.h"
 #include "BottomLayer.h"
+#include "SocketServer.h"
 #include "QueueOper.h"
-#include "Decision.h"
 #include "ScatterSpread.h"
 #include "ConfigFiles.h"
-
-#define IMAGE_RAW "raw.ppm"
-#define IMAGE_SEARCHED "searched.ppm"
 
 int SearchForColor (unsigned char *frame, struct Queue *ScatteringQueue, struct Queue *SpreadingQueue)
 {
@@ -33,12 +30,13 @@ int SearchForColor (unsigned char *frame, struct Queue *ScatteringQueue, struct 
 int main (int argc, char **argv)
 {
 	int video, offset;
-	FILE *file;
 	struct Queue *ScatteringQueue, *SpreadingQueue;
 	int frames = 0, frame_count = -1, i;
 	struct timeval time_n, time_l, time_s;
 	struct VideoInfo video_info;
-	int sockfd;
+	unsigned char *frame_map;
+
+	int sockfd, server_id;
 
 	if ((video = InitVideo ()) == -1)
 	{
@@ -52,12 +50,12 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	sockfd = InitSocket (VISIOND_ID, LOCAL_ADDR, 0);
+	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR);
+
+	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
 
 	ScatteringQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
 	SpreadingQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
-	memset (Index_Coordinate, 0x00, 640 * 480);
-	memset (Index_Number, 0x00, 640 * 480);
 
 	gettimeofday (&time_n, 0);
 	time_s = time_l = time_n;
@@ -65,8 +63,11 @@ int main (int argc, char **argv)
 	for(;;)
 	{
 		while ((offset = RetrieveFrame (video)) == -1)
-			usleep (50000);
-		SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
+			usleep (5000000);
+		if (server_id & DO_SEARCHING)
+			SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
+		if (server_id & NEED_FRAME)
+			memcpy (frame_map, frame + offset, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
 
 		gettimeofday(&time_n, 0);
 		frame_count++;
@@ -79,8 +80,7 @@ int main (int argc, char **argv)
 
 		video_info.fps = frames;
 		video_info.spf = (time_n.tv_sec - time_l.tv_sec) + (float)(time_n.tv_usec - time_l.tv_usec) / 1000000;
-
-		for (i = COLOR_TYPES - 1; i >= 0; i--)
+		for (i = 0; i < COLOR_TYPES; i++)
 		{
 			video_info.area[i] = result[i].area;
 			video_info.aver_x[i] = result[i].aver_x;
@@ -90,8 +90,7 @@ int main (int argc, char **argv)
 		time_l = time_n;
 
 		write (sockfd, &video_info, sizeof (struct VideoInfo));
-
-		usleep (500000);
+		read (sockfd, &server_id, sizeof (int));
 	}
 
 	FreeQueue (ScatteringQueue);

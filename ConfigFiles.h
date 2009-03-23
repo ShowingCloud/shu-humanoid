@@ -17,13 +17,15 @@
 #include "Common.h"
 #include "ColorIdentify.h"
 
-struct HSVColors {
+struct HSVColors
+{
 	struct HSVColor HSVColor[MAX_POINTS_PER_COLOR];
 	int num;
 	int name; /* just a pointer to the defined color */
 }; /* a set of HSVColor-s of a single color */
 
-struct ColorIdentifier {
+struct ColorIdentifier
+{
 	int aver_H;
 	int upper_limit_H;
 	int lower_limit_H;
