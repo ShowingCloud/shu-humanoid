@@ -18,7 +18,7 @@
 #include <linux/videodev.h>
 
 #include "BottomLayer.h"
-#include "SocketServer.h"
+#include "Decision.h"
 
 struct video_mmap map;
 struct video_mbuf mbuf;
@@ -196,22 +196,13 @@ struct motor_step ReadMotionFile (FILE *file)
 	return ret;
 }
 
-int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20], int connection, int server)
+int InitSocket (int sock_id, char addr[20], int server)
 {
-	int result;
-	int sockfd;
+	int result, sockfd;
 	struct sockaddr_in address;
 	socklen_t len;
 
-	if (connection == SOCKET_TCP)
-		sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	else if (connection == SOCKET_UDP)
-		sockfd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	else {
-		printf ("Connection type %d not supported!\n", connection);
-		exit (-1);
-	}
-
+	sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	address.sin_family = AF_INET;
 	if (server)
 		address.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -227,17 +218,10 @@ int InitSocket (int sock_id, char sock_name[20], int *server_id, char addr[20], 
 	}
 
 	if ((result = connect (sockfd, (struct sockaddr *) &address, len)) == -1) {
-		perror (sock_name);
+		perror ("connect");
 		exit (-1);
 	}
 
 	write (sockfd, &sock_id, sizeof (int));
-	read (sockfd, server_id, sizeof (int));
-	if ((*server_id & ID_MASK) != SOCKET_LISTENER_ID) {
-		printf ("Error: unknown socket server!\n");
-		exit (-1);
-	} else {
-		printf ("Connected with the socket server! (%s)\n", sock_name);
-		return sockfd;
-	}
+	return sockfd;
 }

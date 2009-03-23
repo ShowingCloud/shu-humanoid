@@ -30,12 +30,10 @@ int SpreadPoints(unsigned char *frame, struct Queue *ScatteringQueue, struct Que
 	struct PointMatched Point_Matched;
 
 	while(QueueLength(ScatteringQueue))
-		if ((NextPoint = (int) Dequeue(ScatteringQueue)) != -1)
-		{
+		if ((NextPoint = (int) Dequeue(ScatteringQueue)) != -1) {
 			Point_Matched = PointMatch(frame, NextPoint, -1);
 
-			if (Point_Matched.capable)
-			{
+			if (Point_Matched.capable) {
 				specified_color = Point_Matched.color;
 				ClearQueue(SpreadingQueue);
 				Enqueue(SpreadingQueue, (void *) NextPoint);
@@ -56,12 +54,10 @@ int Spreading(unsigned char *frame, struct Queue *SpreadingQueue, int specified_
 	struct PointMatched Point_Matched;
 
 	while(QueueLength(SpreadingQueue))
-		if ((NextPoint = (int) Dequeue(SpreadingQueue)) != -1)
-		{
+		if ((NextPoint = (int) Dequeue(SpreadingQueue)) != -1) {
 			Point_Matched = PointMatch(frame, NextPoint, specified_color);
 
-			if (Point_Matched.capable)
-			{
+			if (Point_Matched.capable) {
 				x = NextPoint % CAPTURE_WIDTH;
 				y = NextPoint / CAPTURE_WIDTH;
 
@@ -84,8 +80,7 @@ int Spreading(unsigned char *frame, struct Queue *SpreadingQueue, int specified_
 			}
 		}
 
-	if (area > result[specified_color].area)
-	{
+	if (area > result[specified_color].area) {
 		aver_x /= area;
 		aver_y /= area;
 //		area /= (36 * 25 * 25);
@@ -97,4 +92,3 @@ int Spreading(unsigned char *frame, struct Queue *SpreadingQueue, int specified_
 
 	return 1;
 }
-

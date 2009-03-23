@@ -14,8 +14,8 @@
 
 #include "Visiond.h"
 #include "BottomLayer.h"
-#include "SocketServer.h"
 #include "QueueOper.h"
+#include "Decision.h"
 #include "ScatterSpread.h"
 #include "ConfigFiles.h"
 
@@ -34,9 +34,7 @@ int main (int argc, char **argv)
 	int frames = 0, frame_count = -1, i;
 	struct timeval time_n, time_l, time_s;
 	struct VideoInfo video_info;
-	unsigned char *frame_map;
-
-	int sockfd, server_id;
+	int sockfd;
 
 	if ((video = InitVideo ()) == -1)
 	{
@@ -50,9 +48,7 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	sockfd = InitSocket (VISIOND_ID, "Visiond", &server_id, LOCAL_ADDR, SOCKET_TCP, 0);
-
-	frame_map = (unsigned char *) InitShared ("/dev/shm/vision");
+	sockfd = InitSocket (VISIOND_ID, LOCAL_ADDR, 0);
 
 	ScatteringQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
 	SpreadingQueue = InitQueue (sizeof (int), CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
@@ -63,11 +59,8 @@ int main (int argc, char **argv)
 	for(;;)
 	{
 		while ((offset = RetrieveFrame (video)) == -1)
-			usleep (5000000);
-		if (server_id & DO_SEARCHING)
-			SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
-		if (server_id & NEED_FRAME)
-			memcpy (frame_map, frame + offset, CAPTURE_WIDTH * CAPTURE_HEIGHT * 3);
+			usleep (500000);
+		SearchForColor(frame + offset, ScatteringQueue, SpreadingQueue);
 
 		gettimeofday(&time_n, 0);
 		frame_count++;
@@ -90,7 +83,7 @@ int main (int argc, char **argv)
 		time_l = time_n;
 
 		write (sockfd, &video_info, sizeof (struct VideoInfo));
-		read (sockfd, &server_id, sizeof (int));
+		usleep (200000);
 	}
 
 	FreeQueue (ScatteringQueue);
