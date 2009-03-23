@@ -1,10 +1,5 @@
 #include "MyVision.h"
 
-/* names of the colors */
-const char color_name[][10] = {"red", "green", "blue", "white", "black"};
-/* standard color value, in RGB */
-const int color_value_rgb[][3] = {{0, 0, 255}, {0, 255, 0}, {255, 0, 0}, {255, 255, 255}, {0, 0, 0}};
-
 struct HSVColor RGB2HSV(int R, int G, int B)
 {
 	/*

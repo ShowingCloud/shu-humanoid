@@ -15,8 +15,14 @@
 #define COLOR_FILE "colordatafile.txt" /* file to save picked HSV values */
 #define COLOR_TYPES 3
 #define MAX_POINTS_PER_COLOR 20
-#define SCATTER_INTERVAL_X 1
-#define SCATTER_INTERVAL_Y 1
+#define SCATTER_INTERVAL_X 10
+#define SCATTER_INTERVAL_Y 10
+#define CONCENTRATED_INTERVAL_X 10
+#define CONCENTRATED_INTERVAL_Y 10
+
+#define H_OVERMEASURE 0
+#define S_OVERMEASURE 0
+#define V_OVERMEASURE 0
 
 #define COLOR_RED 0
 #define COLOR_GREEN 1
@@ -28,8 +34,12 @@
 #define CAPTURE_HEIGHT 480
 #define FRAME_PER_SECOND 10
 
-extern const char color_name[COLOR_TYPES + 2][10];
-extern const int color_value_rgb[COLOR_TYPES + 2][3];
+/* names of the colors */
+static const char color_name[][10] = {"red", "green", "blue", "white", "black"};
+/* standard color value, in RGB */
+static const int color_value_rgb[][3] = {{0, 0, 255}, {0, 255, 0}, {255, 0, 0}, {255, 255, 255}, {0, 0, 0}};
+
+int Index_Coordinate[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Number[CAPTURE_WIDTH * CAPTURE_HEIGHT], Index_Length;
 
 struct HSVColor
 {
@@ -63,41 +73,67 @@ struct ColorIdentifier
 	int aver_H;
 	int upper_limit_H;
 	int lower_limit_H;
-};
+	int aver_S;
+	int upper_limit_S;
+	int lower_limit_S;
+	int aver_V;
+	int upper_limit_V;
+	int lower_limit_V;
+} identifier[COLOR_TYPES];
+
+struct SearchResult
+{
+	int area;
+	int aver_x;
+	int aver_y;
+} result[COLOR_TYPES];
 
 struct PointMatched
 {
 	int capable;
 	int color;
+	int deviation_H;
+	int deviation_S;
+	int deviation_V;
 };
 
 struct FrameQueue
 {
-	int item[CAPTURE_WIDTH * CAPTURE_HEIGHT];
+	int item[CAPTURE_WIDTH * CAPTURE_HEIGHT * 4];
 	int head;
 	int tail;
 };
 
 /* in My_Pickup.c */
-int RecordColor();
 void on_mouse(int, int, int, int, void*);
-static gboolean deleted(GtkWidget*, GdkEvent*, gpointer);
 
 /* in My_Vision.c */
-int ReadColor();
-int SearchForColor(IplImage *);
-struct PointMatched PointMatch(struct HSVColor);
-int PrintColor(IplImage *, int, int);
+int SearchForColor(IplImage *, struct FrameQueue *, struct FrameQueue *);
+struct PointMatched PointMatch(IplImage *, int, int);
+int Scattering(IplImage *, struct FrameQueue *);
+int SpreadPoints(IplImage *, struct FrameQueue *, struct FrameQueue *);
+int Spreading(IplImage *, struct FrameQueue *, int);
 
 /* in HSV.c */
 struct HSVColor RGB2HSV(int, int, int);
 
-/* in FrameQueu */
+/* in FrameQueue.c */
 struct FrameQueue;
 struct FrameQueue *InitQueue();
 int Enqueue(struct FrameQueue *, int);
 int Dequeue(struct FrameQueue *);
 int ClearQueue(struct FrameQueue *);
 int QueueLength(struct FrameQueue *);
+
+/* in ColorFileOper.c */
+int RecordColor(FILE *, struct HSVColors);
+int ReadColor();
+
+/* in GtkOper.c */
+gboolean deleted(GtkWidget*, GdkEvent*, gpointer);
+
+/* in Paint.c */
+int PrintColor(IplImage *, int, int);
+int DrawBigPoint(IplImage *, int, int, int);
 
 #endif
