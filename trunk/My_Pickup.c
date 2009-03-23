@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
 	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, CAPTURE_WIDTH);
 	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, CAPTURE_HEIGHT);
-	cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, FRAME_PER_SECOND);
+//	cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, FRAME_PER_SECOND);
 	
 	gtk_init(&argc, &argv);
 	rate_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
