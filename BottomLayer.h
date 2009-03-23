@@ -22,9 +22,8 @@
 #define FRAME_PER_SECOND 10
 
 #define LOCAL_ADDR "127.0.0.1"
-//#define REMOTE_ADDR "192.168.234.66"
+#define REMOTE_ADDR "192.168.234.66"
 //#define REMOTE_ADDR "192.168.234.69"
-#define REMOTE_ADDR "127.0.0.1"
 
 #define SOCKET_TCP 1
 #define SOCKET_UDP 2
@@ -52,8 +51,7 @@ struct motor_response {
 	unsigned short retcode;
 };
 
-static const struct motor_step step_init = 
-{{82,136,82,27,77,59,86,11,109,104,89,100,180,0,0,0,0,0,0,0,81,100,0,0}};
+static const struct motor_step step_init = {{82,139,82,27,77,57,86,11,109,104,89,99,180,0,0,0,0,0,0,0,0,0,0,0}};
 
 unsigned char *frame;
 
@@ -67,8 +65,8 @@ void *InitShared (char *);
 void *OpenShared (char *);
 int CloseShared (void *);
 int InitMotors ();
-inline int SendMotors (int, struct motor_step);
+int SendMotors (int, struct motor_step);
 struct motor_step ReadMotionFile (FILE *);
-int InitSocket (int, char *, int);
+int InitSocket (int, char *, int *, char *, int, int);
 
 #endif

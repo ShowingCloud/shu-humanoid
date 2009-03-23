@@ -10,8 +10,7 @@
 
 #include "Common.h"
 
-struct PointMatched
-{
+struct PointMatched {
 	int capable;
 	int color;
 	int deviation_H;
@@ -19,8 +18,7 @@ struct PointMatched
 	int deviation_V;
 };
 
-struct HSVColor
-{
+struct HSVColor {
 	int H;
 	int S;
 	int V;
