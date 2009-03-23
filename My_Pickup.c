@@ -24,33 +24,6 @@
 struct Points points; /* record the coordinates of all points clicked */
 struct HSVColors colors; /* record the HSV values of points clicked in one kind of color */
 IplImage* frame; /* one frame */
-FILE* fp; /* file to write HSV values in */
-
-
-int RecordColor()
-{
-	/*
-	 * Save the HSV values of one color to the file.
-	 * The file will look like this:
-	 * 0,red
-	 * xxx,xxx,xxx
-	 * xxx,xxx,xxx
-	 * 2,blue
-	 * xxx,xxx,xxx
-	 * ...
-	 */
-	int i;
-
-	fprintf(fp, "%d,%d,%s\n", colors.name, colors.num, color_name[colors.name]);
-
-	for(i = 0; i < colors.num; i++)
-	{
-		fprintf(fp, "%d,%d,%d\n", colors.HSVColor[i].H, colors.HSVColor[i].S, colors.HSVColor[i].V);
-	}
-
-	return 1;
-}
-
 
 void on_mouse(int event, int x, int y, int flags, void* param)
 {
@@ -80,18 +53,14 @@ void on_mouse(int event, int x, int y, int flags, void* param)
 	}
 }
 
-static gboolean deleted(GtkWidget *widget, GdkEvent *event, gpointer data)
-{
-	return 1;
-}
-
 int main(int argc, char** argv)
 {
 	CvCapture *capture;
 	GtkWidget *rate_dialog, *text;
-	int i, j, p[9], frames = 0, frame_count = -1;
+	int i, frames = 0, frame_count = -1;
 	struct timeval time_n, time_l, time_s;
 	char info[80];
+	FILE* fp; /* file to write HSV values in */
 
 	/* capture from camera */
 	if (!(capture = cvCreateCameraCapture(-1)))
@@ -156,22 +125,8 @@ int main(int argc, char** argv)
 		 * (9 in all) with their color.
 		 */
 		for (i = 0; i < points.num; i++)
-		{
-			p[0] = (points.point[i].y * CAPTURE_WIDTH + points.point[i].x) * 3;
-			p[1] = p[0] - 3; /* left pixel */
-			p[2] = p[0] + 3; /* right pixel */
-			for (j = 0; j < 3; j++)
-			{
-				p[3 + j] = p[j] - CAPTURE_WIDTH * 3; /* the line above */
-				p[6 + j] = p[j] + CAPTURE_WIDTH * 3; /* the line below */
-			}
-			for (j = 0; j < 9; j++)
-			{
-				frame->imageData[p[j]] = color_value_rgb[points.point[i].color][0];
-				frame->imageData[p[j] + 1] = color_value_rgb[points.point[i].color][1];
-				frame->imageData[p[j] + 2] = color_value_rgb[points.point[i].color][2];
-			}
-		}
+			DrawBigPoint(frame, (points.point[i].y * CAPTURE_WIDTH + points.point[i].x), 2,
+					points.point[i].color);
 
 		/* show this modified frame */
 		cvShowImage("MyVision_PickingUp", frame);
@@ -180,21 +135,21 @@ int main(int argc, char** argv)
 		{
 			case 'r': /* mark the former points as red, and save them */
 				colors.name = COLOR_RED;
-				while(!RecordColor());
+				while(!RecordColor(fp, colors));
 				for (i = 0; i < colors.num; i++)
 					points.point[points.num - i - 1].color = COLOR_RED;
 				colors.num = 0;
 				break;
 			case 'g': /* mark the former points as green, and save them */
 				colors.name = COLOR_GREEN;
-				while(!RecordColor());
+				while(!RecordColor(fp, colors));
 				for (i = 0; i < colors.num; i++)
 					points.point[points.num - i - 1].color = COLOR_GREEN;
 				colors.num = 0;
 				break;
 			case 'b': /* mark the former points as blue, and save them */
 				colors.name = COLOR_BLUE;
-				while(!RecordColor());
+				while(!RecordColor(fp, colors));
 				for (i = 0; i < colors.num; i++)
 					points.point[points.num - i - 1].color = COLOR_BLUE;
 				colors.num = 0;
