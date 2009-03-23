@@ -18,42 +18,75 @@
 #include "BottomLayer.h"
 #include "Visiond.h"
 
-int client_index[SOCKET_IDS], steps_start = 0, steps_middle, step_id = 0, num = 0, period = 0;
+int client_index[SOCKET_IDS], steps_start, stepe_start, steps_middle, stepe_middle, step_status = 0, step_start;
 struct motor_step step_now, step_last, steps[200];
 
-int MakeDecision ()
+void ReadDecision ()
 {
 	FILE *fp;
 	int i, tmp;
 
+	steps_start = stepe_start = 0;
 	fp = fopen ("pace/10-26/WalkStart", "r");
 	while (!feof (fp)) {
 		for (i = 0; i < 24; i++) {
 			fscanf (fp, "%d,", &tmp);
-			steps[steps_start].onestep[i] = tmp;
+			steps[stepe_start].onestep[i] = tmp;
 		}
-		steps_start++;
+		stepe_start++;
 	}
-	steps_start--;
+	stepe_start--;
 	fclose (fp);
-	steps_middle = steps_start;
+	steps_middle = stepe_middle = stepe_start;
 	fp = fopen ("pace/10-26/WalkMiddle", "r");
 	while (!feof (fp)) {
 		for (i = 0; i < 24; i++) {
 			fscanf (fp, "%d,", &tmp);
-			steps[steps_middle].onestep[i] = tmp;
+			steps[stepe_middle].onestep[i] = tmp;
 		}
-		steps_middle++;
+		stepe_middle++;
 	}
-	steps_middle--;
+	stepe_middle--;
 	fclose (fp);
+}
 
+int MakeDecision (struct VideoInfo video_info, int *steps)
+{
+	switch (step_status) {
+	case 0:
+		step_status = 1;
+		*steps = steps_start;
+		return (stepe_start - steps_start);
+	case 1:
+		*steps = steps_middle;
+		return (stepe_middle - steps_middle);
+	}
 	return 1;
 }
 
+struct motor_step MakeHeadServo (struct VideoInfo video_info)
+{
+	static struct motor_step ret = {{82,136,82,27,77,59,86,11,109,104,89,100,180,0,0,0,0,0,0,0,81,100,0,0}};
+
+	if (video_info.area[COLOR_RED] > 0) {
+		if (video_info.aver_x[COLOR_RED] > 360)
+			ret.onestep[20] += 2;
+		else if (video_info.aver_x[COLOR_RED] < 280)
+			ret.onestep[20] -= 2;
+		if (video_info.aver_y[COLOR_RED] > 270)
+			ret.onestep[21] += 2;
+		else if (video_info.aver_y[COLOR_RED] < 210)
+			ret.onestep[21] -= 2;
+	}
+
+	return ret;
+}
+
+#if 0
 struct motor_step GetNextStep (struct VideoInfo video_info)
 {
 	struct motor_step ret;
+	int i;
 #if 0
 	if (step_id >= step_num) {
 		if (step_status == STEP_INIT)
@@ -78,16 +111,17 @@ struct motor_step GetNextStep (struct VideoInfo video_info)
 	ret = steps[step_id++];
 	return ret;
 }
-
+#endif
 int main(int argc, char **argv)
 {
 	int listener_sockfd, client_sockfd, result, fd, nread;
-	int client_id[FD_SETSIZE], max_fd = 2, i, j;
+	int client_id[FD_SETSIZE], max_fd = 2, i, j, num, step_num;
 	socklen_t client_len;
 	struct sockaddr_in client_address;
 	fd_set readfds, testfds;
 	struct VideoInfo video_info;
 	struct timeval tv;
+	struct motor_step step_head;
 
 	step_now = step_last = step_init;
 	memset (client_index, 0x00, SOCKET_IDS);
@@ -103,7 +137,7 @@ int main(int argc, char **argv)
 	tv.tv_sec = 0;
 	tv.tv_usec = 20000;
 	client_len = sizeof (client_address);
-	MakeDecision();
+	ReadDecision();
 
 	while (1) {
 		testfds = readfds;
@@ -112,10 +146,10 @@ int main(int argc, char **argv)
 			perror ("Decision");
 			exit(-1);
 		} else if (result == 0) {
-			if (client_index[MOTORD_ID] != 0) {
-				step_now = GetNextStep (video_info);
-				write (client_index[MOTORD_ID], &step_now, sizeof (struct motor_step));
-			}
+//			if (client_index[MOTORD_ID] != 0) {
+//				step_now = GetNextStep (video_info);
+//				write (client_index[MOTORD_ID], &step_now, sizeof (struct motor_step));
+//			}
 			tv.tv_sec = 0;
 			tv.tv_usec = 20000;
 		} else {
@@ -152,10 +186,20 @@ int main(int argc, char **argv)
 						} else {
 							if (client_id[fd] == VISIOND_ID) {
 								read (fd, &video_info, sizeof (struct VideoInfo));
-								if (client_index[MOTORD_ID] != 0)
-//									 MakeDecision (video_info);
+								if (client_index[MOTORD_ID] != 0) {}
+//									step_num = MakeDecision (video_info, &step_start);
 								if (client_index[CONSOLE_GUARDER_ID] != 0)
 									write (client_index[CONSOLE_GUARDER_ID], &video_info, sizeof (struct VideoInfo));
+							} else if (client_id[fd] == MOTORD_ID) {
+								read (fd, &num, sizeof (int));
+								step_num = MakeDecision (video_info, &step_start);
+								write (fd, &step_num, sizeof (int));
+								for (i = 0; i < step_num; i++)
+									write (fd, &steps[step_start + i], sizeof (struct motor_step));
+							} else if (client_id[fd] == MOTORD_HEAD_ID) {
+								read (fd, &num, sizeof (int));
+								step_head = MakeHeadServo (video_info);
+								write (fd, &step_head, sizeof (struct motor_step));
 							}
 						}
 					}

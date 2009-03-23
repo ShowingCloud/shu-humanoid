@@ -13,11 +13,11 @@ int Scattering(struct Queue *ScatteringQueue)
 	Index_Length = 1;
 	ClearQueue(ScatteringQueue);
 
-	for (i = 0; i < COLOR_TYPES; i++)
+	for (i = COLOR_TYPES - 1; i >= 0; i--)
 		result[i].area = 0;
 
-	for (i = 0; i < CAPTURE_HEIGHT; i += SCATTER_INTERVAL_Y)
-		for (j = 0; j < CAPTURE_WIDTH; j += SCATTER_INTERVAL_X)
+	for (i = CAPTURE_HEIGHT - SCATTER_INTERVAL_Y; i >= 0; i -= SCATTER_INTERVAL_Y)
+		for (j = CAPTURE_WIDTH - SCATTER_INTERVAL_X; j >= 0; j -= SCATTER_INTERVAL_X)
 			Enqueue(ScatteringQueue, (void *) (i * CAPTURE_WIDTH + j));
 
 	return 1;
@@ -41,9 +41,11 @@ int SpreadPoints(unsigned char *frame, struct Queue *ScatteringQueue, struct Que
 			}
 		}
 
+#ifdef VERBOSE
 	for (i = 0; i < COLOR_TYPES; i++)
 		if (result[i].area != 0)
 			DrawBigPoint(frame, (result[i].aver_y * CAPTURE_WIDTH + result[i].aver_x), 3, COLOR_TYPES);
+#endif
 
 	return 1;
 }
@@ -69,14 +71,18 @@ int Spreading(unsigned char *frame, struct Queue *SpreadingQueue, int specified_
 
 				Index_Coordinate[NextPoint] = Index_Length;
 				Index_Number[Index_Length++] = NextPoint;
+#ifdef VERBOSE
 				PrintColor(frame, NextPoint, specified_color);
+#endif
 
-				if (NextPoint % CAPTURE_WIDTH != CAPTURE_WIDTH - 1)
+				if (NextPoint % CAPTURE_WIDTH != CAPTURE_WIDTH - 1 && NextPoint + 1 < CAPTURE_WIDTH * CAPTURE_HEIGHT)
 					Enqueue(SpreadingQueue, (void *) (NextPoint + 1));
-				if (NextPoint % CAPTURE_WIDTH)
+				if (NextPoint % CAPTURE_WIDTH && NextPoint - 1 > 0)
 					Enqueue(SpreadingQueue, (void *) (NextPoint - 1));
-				Enqueue(SpreadingQueue, (void *) (NextPoint + CAPTURE_WIDTH));
-				Enqueue(SpreadingQueue, (void *) (NextPoint - CAPTURE_WIDTH));
+				if (NextPoint + CAPTURE_WIDTH < CAPTURE_WIDTH * CAPTURE_HEIGHT)
+					Enqueue(SpreadingQueue, (void *) (NextPoint + CAPTURE_WIDTH));
+				if (NextPoint - CAPTURE_WIDTH > 0)
+					Enqueue(SpreadingQueue, (void *) (NextPoint - CAPTURE_WIDTH));
 			}
 		}
 

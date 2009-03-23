@@ -11,9 +11,9 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 {
 	int i;
 	
-	if (Coordinate < 0 || Coordinate >= CAPTURE_WIDTH * CAPTURE_HEIGHT
-			|| (Index_Coordinate[Coordinate] <= Index_Length && Index_Coordinate[Coordinate] != 0
-				&& Index_Number[Index_Coordinate[Coordinate]] == Coordinate)) {
+	if ((Index_Number[Index_Coordinate[Coordinate]] == Coordinate
+		&& Index_Coordinate[Coordinate] <= Index_Length && Index_Coordinate[Coordinate] > 0)
+		|| Coordinate < 0 || Coordinate >= CAPTURE_WIDTH * CAPTURE_HEIGHT) {
 		struct PointMatched ret = {0, COLOR_TYPES, -1, -1, -1};
 		return ret;
 	}
@@ -21,7 +21,7 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 	struct HSVColor HSV = RGB2HSV(frame[Coordinate * 3], frame[Coordinate * 3 + 1], frame[Coordinate * 3 + 2]);
 
 	if (color == -1)
-		for (i = 0; i < COLOR_TYPES; i++) {
+		for (i = COLOR_TYPES - 1; i >= 0; i--)
 			if (identifier[i].aver_H != -500) {
 				if ((HSV.H - identifier[i].aver_H) > 180) HSV.H -= 360;
 				else if ((identifier[i].aver_H - HSV.H) > 180) HSV.H += 360;
@@ -36,8 +36,7 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 					return ret;
 				}
 			}
-		}
-	else {
+	else
 		if (identifier[color].aver_H != -500) {
 			if ((HSV.H - identifier[color].aver_H) > 180) HSV.H -= 360;
 			else if ((identifier[color].aver_H - HSV.H) > 180) HSV.H += 360;
@@ -52,7 +51,6 @@ struct PointMatched PointMatch(unsigned char *frame, int Coordinate, int color)
 				return ret;
 			}
 		}
-	}
 
 	struct PointMatched ret = {0, COLOR_TYPES, -1, -1, -1};
 	return ret;

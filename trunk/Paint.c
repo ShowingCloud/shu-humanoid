@@ -5,7 +5,7 @@
 #include "Paint.h"
 #include "BottomLayer.h"
 
-int PrintColor(unsigned char *frame, int c, int color)
+inline int PrintColor(unsigned char *frame, int c, int color)
 {
 	if (c >= 0 && c <= CAPTURE_WIDTH * CAPTURE_HEIGHT - 1) {
 		frame[c * 3] = COLOR_VALUE_RGB[color][0];
@@ -16,7 +16,7 @@ int PrintColor(unsigned char *frame, int c, int color)
 	return 1;
 }
 
-int DrawBigPoint(unsigned char *frame, int Center, int Radius, int color)
+inline int DrawBigPoint(unsigned char *frame, int Center, int Radius, int color)
 {
 	int i, j;
 

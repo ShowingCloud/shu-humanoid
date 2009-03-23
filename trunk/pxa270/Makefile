@@ -1,5 +1,5 @@
 CC		= arm-linux-gnu-gcc
-CFLAGS		= -I. -O3 -Wall -Wextra -DVERBOSE -DHAS_MOTORS -mtune=xscale -march=armv5te
+CFLAGS		= -I. -O3 -Wall -Wextra -DHAS_MOTORS -mtune=xscale -march=armv5te -DVERBOSE
 LDFLAGS		=
 
 obj_Visiond	= Visiond.o QueueOper.o ConfigFiles.o Paint.o ScatterSpread.o ColorIdentify.o BottomLayer.o

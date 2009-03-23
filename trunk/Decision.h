@@ -8,7 +8,7 @@
 #ifndef _Socket_Server_H_
 #define _Socket_Server_H_
 
-#define SOCKET_IDS 7
+#define SOCKET_IDS 8
 #define ID_MASK 0x000F
 
 #define SOCKET_LISTENER_ID 0x0000
@@ -18,6 +18,7 @@
 #define GTK_GUARDER_FRAME_ID 0x0004
 #define MOTORD_ID 0x0005
 #define GAIT_ADJUST_ID 0x0006
+#define MOTORD_HEAD_ID 0x0007
 
 #define NEED_FRAME 0x0010
 #define DO_SEARCHING 0x0020
