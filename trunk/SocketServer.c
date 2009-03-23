@@ -253,14 +253,14 @@ static struct ClientOper ClientOper[] = {
 
 int main(int argc, char **argv)
 {
-	int listener_sockfd, client_sockfd, result;
-	int connected[FD_SETSIZE], client_id[FD_SETSIZE], max_fd = 3, i, j;
+	int listener_sockfd_tcp, listener_sockfd_udp, client_sockfd, result;
+	int connected[FD_SETSIZE], client_id[FD_SETSIZE], max_fd = 2, i, j;
 	socklen_t client_len;
 	struct sockaddr_in client_address;
 	fd_set readfds, testfds;
 
-	connected[0] = connected[1] = connected[2] = connected[3] = 1;
-	for (i = 4; i < FD_SETSIZE; i++)
+	connected[0] = connected[1] = connected[2] = 1;
+	for (i = 3; i < FD_SETSIZE; i++)
 		connected[i] = 0;
 
 	for (i = 0; i < SOCKET_IDS; i++) {
@@ -271,16 +271,18 @@ int main(int argc, char **argv)
 
 	step_now = step_last = step_init;
 
-	listener_sockfd = InitSocket (SOCKET_LISTENER_ID, "Socket Listener", (void *) 0, "", SOCKET_TCP, 1);
-	frame_sockfd = InitSocket (GTK_GUARDER_FRAME_ID, "Gtk Guarder (Frame)", (void *) 0, "", SOCKET_UDP, 0);
+	listener_sockfd_tcp = InitSocket (SOCKET_LISTENER_ID, "Socket Listener", (void *) 0, "", SOCKET_TCP, 1);
+	listener_sockfd_udp = InitSocket (SOCKET_LISTEN_ID, "Socket Listener", (void *) 0, "", SOCKET_UDP, 1);
 
 	FD_ZERO (&readfds);
 
-	FD_SET (listener_sockfd, &readfds);
-	if (listener_sockfd > max_fd) max_fd = listener_sockfd;
+	FD_SET (listener_sockfd_tcp, &readfds);
+	if (listener_sockfd > max_fd) max_fd = listener_sockfd_tcp;
+	connected[listener_sockfd_tcp] = 1;
 
-//	FD_SET (listener_sockfd_udp, &readfds);
-//	if (listener_sockfd_udp > max_fd) max_fd = listener_sockfd_udp;
+	FD_SET (listener_sockfd_udp, &readfds);
+	if (listener_sockfd_udp > max_fd) max_fd = listener_sockfd_udp;
+	connected[listener_sockfd_udp] = 1;
 
 	printf ("Socket listener waiting. A maximum of %d clients are allowed.\n", FD_SETSIZE);
 
@@ -299,8 +301,8 @@ int main(int argc, char **argv)
 
 		for (fd = 0; fd <= max_fd; fd++)
 			if (FD_ISSET (fd, &testfds)) {
-				if (fd == listener_sockfd) {
-					if ((client_sockfd = accept (listener_sockfd,
+				if (fd == listener_sockfd_tcp) {
+					if ((client_sockfd = accept (listener_sockfd_tcp,
 									(struct sockaddr *) &client_address,
 									&client_len)) < 0) {
 						perror ("SocketServer");
@@ -313,9 +315,8 @@ int main(int argc, char **argv)
 #endif
 					if (client_sockfd > max_fd) max_fd = client_sockfd;
 
-				} else if (fd == frame_sockfd) {
-					printf ("Error\n");
-					exit (-1);
+				} else if (fd == listener_sockfd_tcp) {
+					recvfrom (listener_sock_fd, &
 				} else {
 					ioctl (fd, FIONREAD, &nread);
 
