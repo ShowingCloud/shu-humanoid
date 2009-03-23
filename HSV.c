@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "MyVision.h"
 
 struct HSVColor RGB2HSV(int R, int G, int B)

@@ -1,17 +1,21 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "MyVision.h"
 
-int PrintColor(IplImage *frame, int c, int color)
+int PrintColor(unsigned char *frame, int c, int color)
 {
 	if (c >= 0 && c <= CAPTURE_WIDTH * CAPTURE_HEIGHT - 1)
 	{
-		frame->imageData[c * 3 + 2] = color_value_rgb[color][2];
-		frame->imageData[c * 3 + 1] = color_value_rgb[color][1];
-		frame->imageData[c * 3] = color_value_rgb[color][0];
+		frame[c * 3 + 2] = COLOR_VALUE_RGB[color][2];
+		frame[c * 3 + 1] = COLOR_VALUE_RGB[color][1];
+		frame[c * 3] = COLOR_VALUE_RGB[color][0];
 	}
 	return 1;
 }
 
-int DrawBigPoint(IplImage *frame, int Center, int Radius, int color)
+int DrawBigPoint(unsigned char *frame, int Center, int Radius, int color)
 {
 	int i, j;
 

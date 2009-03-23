@@ -1,6 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "MyVision.h"
 
-int Scattering(IplImage *frame, struct FrameQueue *ScatteringQueue)
+int Scattering(struct FrameQueue *ScatteringQueue)
 {
 	int i, j;
 
@@ -18,7 +22,7 @@ int Scattering(IplImage *frame, struct FrameQueue *ScatteringQueue)
 }
 
 
-int SpreadPoints(IplImage *frame, struct FrameQueue *ScatteringQueue, struct FrameQueue *SpreadingQueue)
+int SpreadPoints(unsigned char *frame, struct FrameQueue *ScatteringQueue, struct FrameQueue *SpreadingQueue)
 {
 	int NextPoint, specified_color, i;
 	struct PointMatched Point_Matched;
@@ -44,7 +48,7 @@ int SpreadPoints(IplImage *frame, struct FrameQueue *ScatteringQueue, struct Fra
 	return 1;
 }
 
-int Spreading(IplImage *frame, struct FrameQueue *SpreadingQueue, int specified_color)
+int Spreading(unsigned char *frame, struct FrameQueue *SpreadingQueue, int specified_color)
 {
 	int NextPoint, x, y, aver_x = 0, aver_y = 0, area = 0, weight;
 	struct PointMatched Point_Matched;

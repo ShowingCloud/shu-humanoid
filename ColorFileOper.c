@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "MyVision.h"
 
 int RecordColor(FILE *fp, struct HSVColors colors)
@@ -14,7 +18,7 @@ int RecordColor(FILE *fp, struct HSVColors colors)
 	 */
 	int i;
 
-	fprintf(fp, "%d,%d,%s\n", colors.name, colors.num, color_name[colors.name]);
+	fprintf(fp, "%d,%d,%s\n", colors.name, colors.num, COLOR_NAME[colors.name]);
 
 	for(i = 0; i < colors.num; i++)
 	{
@@ -133,7 +137,7 @@ int ReadColor()
 		identifier[i].lower_limit_V = lower_limit_V;
 
 		printf("%s; H: %d, %d, %d; S: %d, %d, %d; V: %d, %d, %d\n",
-				color_name[i], aver_H, upper_limit_H, lower_limit_H,
+				COLOR_NAME[i], aver_H, upper_limit_H, lower_limit_H,
 				aver_S, upper_limit_S, lower_limit_S,
 				aver_V, upper_limit_V, lower_limit_V);
 	}
